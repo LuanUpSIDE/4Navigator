@@ -85,6 +85,29 @@
               </div>
               <span class="fps-info-hint">Mantém a progressão contínua com menor consumo de CPU.</span>
             </div>
+
+            <div class="dropdown-divider"></div>
+
+            <!-- Section 4: Aceleração de Hardware (GPU) -->
+            <div class="dropdown-section-title">
+              <span>🖥️ Aceleração de Hardware (GPU)</span>
+            </div>
+            <div class="options-gpu-container">
+              <div class="gpu-toggle-row">
+                <div class="gpu-text-desc">
+                  <strong>Aceleração por GPU</strong>
+                  <span>Renderização gráfica acelerada por hardware</span>
+                </div>
+                <label class="switch-toggle" title="Ligar ou desligar aceleração de hardware por GPU (Padrão: Ligada)">
+                  <input type="checkbox" id="toggle-gpu-accel" checked>
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+              <div id="gpu-restart-notice" class="gpu-restart-notice hidden">
+                <span>⚠️ Requer reinicialização para aplicar</span>
+                <button id="btn-relaunch-app" class="btn-restart-pill" title="Reiniciar 4Navigator agora">Reiniciar Agora</button>
+              </div>
+            </div>
           </div>
         </div>
 

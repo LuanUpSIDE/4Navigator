@@ -11,6 +11,9 @@ contextBridge.exposeInMainWorld('navigatorAPI', {
   clearCache: () => ipcRenderer.invoke('app:clear-cache'),
   openExternal: (url) => ipcRenderer.invoke('app:open-external', url),
   platform: process.platform,
+  getGpuStatus: () => ipcRenderer.invoke('gpu:get-status'),
+  setGpuStatus: (enabled) => ipcRenderer.invoke('gpu:set-status', enabled),
+  relaunch: () => ipcRenderer.invoke('app:relaunch'),
   updater: {
     check: () => ipcRenderer.invoke('updater:check'),
     download: () => ipcRenderer.invoke('updater:download'),

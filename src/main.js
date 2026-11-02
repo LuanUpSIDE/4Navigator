@@ -1,6 +1,37 @@
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const { autoUpdater } = require('electron-updater');
+
+// Configuration file for persistent app settings (e.g., GPU hardware acceleration)
+const configFilePath = path.join(app.getPath('userData'), 'app-settings.json');
+
+function loadAppSettings() {
+  try {
+    if (fs.existsSync(configFilePath)) {
+      const content = fs.readFileSync(configFilePath, 'utf8');
+      return JSON.parse(content || '{}');
+    }
+  } catch (_) {}
+  return { gpuAcceleration: true }; // Enabled by default
+}
+
+function saveAppSettings(settings) {
+  try {
+    const current = loadAppSettings();
+    const updated = { ...current, ...settings };
+    fs.writeFileSync(configFilePath, JSON.stringify(updated, null, 2), 'utf8');
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+const currentConfig = loadAppSettings();
+// GPU Hardware acceleration: enabled by default. If explicitly false, disable it before app is ready.
+if (currentConfig.gpuAcceleration === false) {
+  app.disableHardwareAcceleration();
+}
 
 // Configure autoUpdater
 autoUpdater.autoDownload = false;
@@ -138,6 +169,25 @@ ipcMain.handle('app:open-external', async (event, url) => {
   if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
     await shell.openExternal(url);
   }
+});
+
+// GPU Hardware Acceleration Handlers
+ipcMain.handle('gpu:get-status', () => {
+  const settings = loadAppSettings();
+  return {
+    gpuAcceleration: settings.gpuAcceleration !== false // true by default
+  };
+});
+
+ipcMain.handle('gpu:set-status', (event, enabled) => {
+  const isEnabled = Boolean(enabled);
+  saveAppSettings({ gpuAcceleration: isEnabled });
+  return { success: true, gpuAcceleration: isEnabled };
+});
+
+ipcMain.handle('app:relaunch', () => {
+  app.relaunch();
+  app.exit(0);
 });
 
 // Auto-Updater Handlers & Events

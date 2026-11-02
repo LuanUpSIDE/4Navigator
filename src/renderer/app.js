@@ -649,6 +649,49 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // ================= GPU Hardware Acceleration Logic =================
+  const toggleGpuAccel = document.getElementById('toggle-gpu-accel');
+  const gpuRestartNotice = document.getElementById('gpu-restart-notice');
+  const btnRelaunchApp = document.getElementById('btn-relaunch-app');
+  let initialGpuState = true;
+
+  if (window.navigatorAPI && window.navigatorAPI.getGpuStatus) {
+    window.navigatorAPI.getGpuStatus().then(status => {
+      initialGpuState = status.gpuAcceleration !== false;
+      if (toggleGpuAccel) {
+        toggleGpuAccel.checked = initialGpuState;
+      }
+    }).catch(() => {});
+  }
+
+  if (toggleGpuAccel) {
+    toggleGpuAccel.addEventListener('change', async () => {
+      const isEnabled = toggleGpuAccel.checked;
+      if (window.navigatorAPI && window.navigatorAPI.setGpuStatus) {
+        await window.navigatorAPI.setGpuStatus(isEnabled);
+      }
+
+      // Show restart prompt if the state differs from current runtime state
+      if (isEnabled !== initialGpuState) {
+        gpuRestartNotice?.classList.remove('hidden');
+        showToast(isEnabled ? '🖥️ GPU Acelerada ligada! Reinicie para aplicar.' : '🖥️ GPU Acelerada desligada! Reinicie para aplicar.');
+      } else {
+        gpuRestartNotice?.classList.add('hidden');
+      }
+    });
+  }
+
+  if (btnRelaunchApp) {
+    btnRelaunchApp.addEventListener('click', () => {
+      if (window.navigatorAPI && window.navigatorAPI.relaunch) {
+        showToast('Reiniciando 4Navigator...');
+        setTimeout(() => {
+          window.navigatorAPI.relaunch();
+        }, 300);
+      }
+    });
+  }
+
   // Notes Drawer Logic
   function loadNote(tab) {
     const text = localStorage.getItem(`4nav_notes_${tab}`) || '';

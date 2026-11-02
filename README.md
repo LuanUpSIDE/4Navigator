@@ -10,6 +10,7 @@ Um navegador desktop construído em **Electron** projetado especialmente para en
   - **📑 Presets Prontos & Personalizados:** Clássicos, RPG & Estratégia, Sci-Fi e salvar/carregar seu próprio quarteto de jogos.
   - **💾 Gerenciador de Backup & Restauração:** Exportação e restauração de saves em formato `.json`.
   - **⚡ Limitador de FPS Interativo:** Botões pill para alternar entre 60 FPS (Padrão), 30 FPS (Eco) e 15 FPS (Ultra-Eco).
+  - **🖥️ Aceleração de Hardware por GPU (Opcional - Padrão Ligada):** Interruptor toggle para ativar ou desativar a aceleração gráfica por hardware da GPU, com persistência e reinicialização rápida.
 - **🔄 Sistema de Atualização Direto no Navegador (In-App Auto-Update):** Verifique e baixe novas versões diretamente pelo botão de **Atualizações** na barra superior ou através da verificação automática integrada com o GitHub Releases (`electron-updater`).
 - **⭐ Barra de Favoritos & Adicionar aos Favoritos:** Barra horizontal dedicada logo abaixo do cabeçalho com acesso rápido aos seus jogos favoritos. Adicione qualquer site aos favoritos com 1 clique no botão de estrela (`⭐`) de cada quadrante ou pelo botão `+ Adicionar` manual, com persistência e remoção simplificada.
 - **📊 Monitor de Memória RAM & Consumo em Tempo Real:** Barra de status no rodapé (Resource HUD) que exibe o consumo individual de memória RAM e CPU de cada quadrante (`P1` a `P4`), a memória total consumida pelo navegador e um botão de **🧹 Otimizar RAM** para limpar caches e liberar memória imediatamente.
