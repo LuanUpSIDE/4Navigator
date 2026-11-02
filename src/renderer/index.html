@@ -19,46 +19,72 @@
       </div>
 
       <div class="global-actions">
-        <!-- Preset Dropdown -->
+        <!-- Unified Options & Settings Dropdown -->
         <div class="dropdown-wrapper">
-          <button id="btn-presets" class="btn btn-secondary">
-            <span class="icon">📑</span> Presets
+          <button id="btn-options-menu" class="btn btn-secondary" title="Opções e Configurações do Navegador">
+            <span class="icon">⚙️</span> Opções
           </button>
-          <div id="presets-menu" class="dropdown-menu hidden">
-            <div class="dropdown-header">Coleções Prontas</div>
-            <button class="dropdown-item" data-preset="classics">
-              🍪 <strong>Clássicos</strong> (Cookie Clicker, Paperclips, Candy Box 2, Dark Room)
-            </button>
-            <button class="dropdown-item" data-preset="progression">
-              ⚔️ <strong>RPG & Estratégia</strong> (Trimps, Melvor, Evolve, Crank)
-            </button>
-            <button class="dropdown-item" data-preset="sci-fi">
-              🚀 <strong>Sci-Fi / Números</strong> (Antimatter Dimensions, Synergism, Space Company, Swarm Sim)
-            </button>
-            <div class="dropdown-divider"></div>
-            <button id="btn-save-custom-preset" class="dropdown-item text-primary">
-              💾 Salvar Quarteto Atual como Meu Preset
-            </button>
-            <button id="btn-load-custom-preset" class="dropdown-item text-success">
-              📂 Carregar Meu Preset Salvo
-            </button>
-          </div>
-        </div>
+          <div id="options-menu" class="dropdown-menu options-dropdown-menu hidden">
+            <!-- Section 1: Presets -->
+            <div class="dropdown-section-title">
+              <span>📑 Presets de Jogos</span>
+            </div>
+            <div class="options-presets-list">
+              <button class="dropdown-item" data-preset="classics">
+                🍪 <strong>Clássicos</strong> (Cookie Clicker, Paperclips, Candy Box 2, Dark Room)
+              </button>
+              <button class="dropdown-item" data-preset="progression">
+                ⚔️ <strong>RPG & Estratégia</strong> (Trimps, Melvor, Evolve, Crank)
+              </button>
+              <button class="dropdown-item" data-preset="sci-fi">
+                🚀 <strong>Sci-Fi / Números</strong> (Antimatter Dimensions, Synergism, Space Company)
+              </button>
+              <div class="dropdown-sub-actions">
+                <button id="btn-save-custom-preset" class="dropdown-item text-primary">
+                  💾 Salvar Quarteto Atual como Meu Preset
+                </button>
+                <button id="btn-load-custom-preset" class="dropdown-item text-success">
+                  📂 Carregar Meu Preset Salvo
+                </button>
+              </div>
+            </div>
 
-        <!-- Backup & Saves Dropdown -->
-        <div class="dropdown-wrapper">
-          <button id="btn-backup-menu" class="btn btn-secondary" title="Gerenciador de Saves e Backup">
-            <span class="icon">💾</span> Backup Saves
-          </button>
-          <div id="backup-menu" class="dropdown-menu hidden">
-            <div class="dropdown-header">Gerenciador de Saves</div>
-            <button id="btn-export-backup" class="dropdown-item text-success">
-              ⬇️ <strong>Exportar Backup Completo (.json)</strong>
-            </button>
-            <button id="btn-import-backup-trigger" class="dropdown-item text-primary">
-              ⬆️ <strong>Restaurar Backup (.json)</strong>
-            </button>
-            <input type="file" id="backup-file-input" accept=".json" style="display:none">
+            <div class="dropdown-divider"></div>
+
+            <!-- Section 2: Gerenciador de Backup -->
+            <div class="dropdown-section-title">
+              <span>💾 Gerenciador de Saves & Backup</span>
+            </div>
+            <div class="options-backup-actions">
+              <button id="btn-export-backup" class="dropdown-item text-success">
+                ⬇️ <strong>Exportar Backup Completo (.json)</strong>
+              </button>
+              <button id="btn-import-backup-trigger" class="dropdown-item text-primary">
+                ⬆️ <strong>Restaurar Backup (.json)</strong>
+              </button>
+              <input type="file" id="backup-file-input" accept=".json" style="display:none">
+            </div>
+
+            <div class="dropdown-divider"></div>
+
+            <!-- Section 3: Taxa de Quadros (FPS) -->
+            <div class="dropdown-section-title">
+              <span>⚡ Taxa de Quadros (Limitador de FPS)</span>
+            </div>
+            <div class="options-fps-container">
+              <div class="fps-options-pills">
+                <button class="fps-pill active" data-fps="60" title="Padrão suave e dinâmico">
+                  ⚡ 60 FPS <span>(Padrão)</span>
+                </button>
+                <button class="fps-pill" data-fps="30" title="Economia de processamento e bateria">
+                  🔋 30 FPS <span>(Eco)</span>
+                </button>
+                <button class="fps-pill" data-fps="15" title="Máxima economia para idle em segundo plano">
+                  💤 15 FPS <span>(Ultra-Eco)</span>
+                </button>
+              </div>
+              <span class="fps-info-hint">Mantém a progressão contínua com menor consumo de CPU.</span>
+            </div>
           </div>
         </div>
 
@@ -94,15 +120,6 @@
       </div>
 
       <div class="window-controls">
-        <!-- FPS Limiter Selector (Default 60 FPS) -->
-        <div class="fps-selector-container">
-          <select id="select-fps" class="select-fps" title="Limitador de Taxa de Quadros (Opcional - Padrão 60 FPS)">
-            <option value="60" selected>⚡ 60 FPS (Padrão)</option>
-            <option value="30">🔋 30 FPS (Eco)</option>
-            <option value="15">💤 15 FPS (Ultra-Eco)</option>
-          </select>
-        </div>
-
         <button id="btn-win-maximize" class="btn btn-icon" title="Alternar Tela Cheia">🗖</button>
       </div>
     </header>

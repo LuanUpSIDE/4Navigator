@@ -407,10 +407,9 @@ document.addEventListener('DOMContentLoaded', () => {
   renderBookmarks();
 
   // ================= Global Controls =================
-  const btnPresets = document.getElementById('btn-presets');
-  const presetsMenu = document.getElementById('presets-menu');
-  const btnBackupMenu = document.getElementById('btn-backup-menu');
-  const backupMenu = document.getElementById('backup-menu');
+  // ================= Global Controls =================
+  const btnOptionsMenu = document.getElementById('btn-options-menu');
+  const optionsMenu = document.getElementById('options-menu');
   const btnExportBackup = document.getElementById('btn-export-backup');
   const btnImportBackupTrigger = document.getElementById('btn-import-backup-trigger');
   const backupFileInput = document.getElementById('backup-file-input');
@@ -423,7 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const quadrantsViewport = document.getElementById('quadrants-viewport');
   const btnWinMaximize = document.getElementById('btn-win-maximize');
   const btnMiniWidget = document.getElementById('btn-mini-widget');
-  const selectFps = document.getElementById('select-fps');
+  const fpsPills = document.querySelectorAll('.fps-pill');
 
   // Notes Elements
   const btnToggleNotes = document.getElementById('btn-toggle-notes');
@@ -437,27 +436,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let currentNoteTab = 'general';
 
-  // Presets Menu Toggle
-  btnPresets.addEventListener('click', (e) => {
-    e.stopPropagation();
-    backupMenu.classList.add('hidden');
-    presetsMenu.classList.toggle('hidden');
-  });
+  // Options Menu Toggle
+  if (btnOptionsMenu && optionsMenu) {
+    btnOptionsMenu.addEventListener('click', (e) => {
+      e.stopPropagation();
+      optionsMenu.classList.toggle('hidden');
+    });
 
-  // Backup Menu Toggle
-  btnBackupMenu.addEventListener('click', (e) => {
-    e.stopPropagation();
-    presetsMenu.classList.add('hidden');
-    backupMenu.classList.toggle('hidden');
-  });
+    document.addEventListener('click', () => {
+      optionsMenu.classList.add('hidden');
+    });
 
-  document.addEventListener('click', () => {
-    presetsMenu.classList.add('hidden');
-    backupMenu.classList.add('hidden');
-  });
-
-  presetsMenu.addEventListener('click', (e) => e.stopPropagation());
-  backupMenu.addEventListener('click', (e) => e.stopPropagation());
+    optionsMenu.addEventListener('click', (e) => e.stopPropagation());
+  }
 
   // Load Preset Function
   function loadPreset(urls) {
@@ -467,48 +458,56 @@ document.addEventListener('DOMContentLoaded', () => {
         quadrants[idx].navigateTo(url);
       }
     });
-    presetsMenu.classList.add('hidden');
+    if (optionsMenu) optionsMenu.classList.add('hidden');
   }
 
   // Built-in presets clicks
-  presetsMenu.querySelectorAll('[data-preset]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const key = btn.getAttribute('data-preset');
-      const list = PRESETS[key];
-      if (list) {
-        loadPreset(list);
-        showToast(`Preset carregado com sucesso!`);
-      }
+  if (optionsMenu) {
+    optionsMenu.querySelectorAll('[data-preset]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.getAttribute('data-preset');
+        const list = PRESETS[key];
+        if (list) {
+          loadPreset(list);
+          showToast(`Preset carregado com sucesso!`);
+        }
+      });
     });
-  });
+  }
 
   // Custom Preset: Save
-  document.getElementById('btn-save-custom-preset').addEventListener('click', () => {
-    const currentUrls = quadrants.map(q => q.webview.getURL() || q.urlInput.value || '');
-    localStorage.setItem('4nav_custom_preset', JSON.stringify(currentUrls));
-    presetsMenu.classList.add('hidden');
-    showToast('💾 Quarteto de jogos atual salvo como seu preset!');
-  });
+  const btnSaveCustomPreset = document.getElementById('btn-save-custom-preset');
+  if (btnSaveCustomPreset) {
+    btnSaveCustomPreset.addEventListener('click', () => {
+      const currentUrls = quadrants.map(q => q.webview.getURL() || q.urlInput.value || '');
+      localStorage.setItem('4nav_custom_preset', JSON.stringify(currentUrls));
+      if (optionsMenu) optionsMenu.classList.add('hidden');
+      showToast('💾 Quarteto de jogos atual salvo como seu preset!');
+    });
+  }
 
   // Custom Preset: Load
-  document.getElementById('btn-load-custom-preset').addEventListener('click', () => {
-    const saved = localStorage.getItem('4nav_custom_preset');
-    if (!saved) {
-      showToast('⚠️ Nenhum preset personalizado salvo ainda.');
-      return;
-    }
-    try {
-      const urls = JSON.parse(saved);
-      loadPreset(urls);
-      showToast('📂 Seu preset personalizado foi carregado com sucesso!');
-    } catch (e) {
-      showToast('❌ Erro ao ler preset salvo.');
-    }
-  });
+  const btnLoadCustomPreset = document.getElementById('btn-load-custom-preset');
+  if (btnLoadCustomPreset) {
+    btnLoadCustomPreset.addEventListener('click', () => {
+      const saved = localStorage.getItem('4nav_custom_preset');
+      if (!saved) {
+        showToast('⚠️ Nenhum preset personalizado salvo ainda.');
+        return;
+      }
+      try {
+        const urls = JSON.parse(saved);
+        loadPreset(urls);
+        showToast('📂 Seu preset personalizado foi carregado com sucesso!');
+      } catch (e) {
+        showToast('❌ Erro ao ler preset salvo.');
+      }
+    });
+  }
 
   // ================= Backup & Restore Saves =================
   btnExportBackup.addEventListener('click', async () => {
-    backupMenu.classList.add('hidden');
+    if (optionsMenu) optionsMenu.classList.add('hidden');
     showToast('Extraindo saves dos 4 jogos...');
 
     const backupPayload = {
@@ -549,7 +548,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   btnImportBackupTrigger.addEventListener('click', () => {
-    backupMenu.classList.add('hidden');
+    if (optionsMenu) optionsMenu.classList.add('hidden');
     backupFileInput.click();
   });
 
@@ -636,13 +635,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // FPS Limiter
-  selectFps.addEventListener('change', async () => {
-    const fps = Number(selectFps.value) || 60;
-    if (window.navigatorAPI && window.navigatorAPI.setFpsLimit) {
-      await window.navigatorAPI.setFpsLimit(fps);
-      showToast(`Taxa de quadros ajustada para ${fps} FPS`);
-    }
+  // FPS Limiter with interactive pills
+  fpsPills.forEach(pill => {
+    pill.addEventListener('click', async () => {
+      const fps = Number(pill.getAttribute('data-fps')) || 60;
+      fpsPills.forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+
+      if (window.navigatorAPI && window.navigatorAPI.setFpsLimit) {
+        await window.navigatorAPI.setFpsLimit(fps);
+        showToast(`⚡ Taxa de quadros ajustada para ${fps} FPS`);
+      }
+    });
   });
 
   // Notes Drawer Logic

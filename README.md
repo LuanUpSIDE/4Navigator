@@ -6,24 +6,21 @@ Um navegador desktop construído em **Electron** projetado especialmente para en
 
 ## ✨ Principais Recursos
 
-- **🔄 Sistema de Atualização Direto no Navegador (In-App Auto-Update):** Verifique e baixe novas versões diretamente pelo botão de **Atualizações** na barra superior ou através da verificação automática integrada com o GitHub Releases (`electron-updater`). Acompanhe o progresso de download em tempo real e reinicie com um clique para aplicar a nova versão sem precisar baixar instaladores manualmente.
+- **⚙️ Menu de Opções Unificado:** Menu moderno suspenso que centraliza:
+  - **📑 Presets Prontos & Personalizados:** Clássicos, RPG & Estratégia, Sci-Fi e salvar/carregar seu próprio quarteto de jogos.
+  - **💾 Gerenciador de Backup & Restauração:** Exportação e restauração de saves em formato `.json`.
+  - **⚡ Limitador de FPS Interativo:** Botões pill para alternar entre 60 FPS (Padrão), 30 FPS (Eco) e 15 FPS (Ultra-Eco).
+- **🔄 Sistema de Atualização Direto no Navegador (In-App Auto-Update):** Verifique e baixe novas versões diretamente pelo botão de **Atualizações** na barra superior ou através da verificação automática integrada com o GitHub Releases (`electron-updater`).
 - **⭐ Barra de Favoritos & Adicionar aos Favoritos:** Barra horizontal dedicada logo abaixo do cabeçalho com acesso rápido aos seus jogos favoritos. Adicione qualquer site aos favoritos com 1 clique no botão de estrela (`⭐`) de cada quadrante ou pelo botão `+ Adicionar` manual, com persistência e remoção simplificada.
 - **📊 Monitor de Memória RAM & Consumo em Tempo Real:** Barra de status no rodapé (Resource HUD) que exibe o consumo individual de memória RAM e CPU de cada quadrante (`P1` a `P4`), a memória total consumida pelo navegador e um botão de **🧹 Otimizar RAM** para limpar caches e liberar memória imediatamente.
 - **🎯 Auto-Clicker Integrado por Quadrante:** Ative ou desative cliques contínuos (20 CPS) em qualquer um dos 4 quadrantes com um clique no botão de mira (`🎯`) ou feedback visual luminoso.
-- **💾 Gerenciador de Backup & Restauração de Saves:** Exporte todos os dados de `localStorage` dos 4 jogos em um único arquivo `.json` ou restaure backups anteriores para nunca perder seu progresso.
 - **📌 Modo Mini-Widget (Always-on-Top):** Reduza o navegador para uma janela flutuante ultracompacta (480x480) que fica sempre visível enquanto você trabalha ou assiste séries.
 - **📝 Bloco de Notas Lateral (Drawer):** Gaveta retrátil com abas dedicadas (Geral, P1, P2, P3, P4) e auto-save para anotar builds, links, guias e códigos de exportação.
-- **⚡ Limitador de FPS Opcional (Padrão 60 FPS):** Mantenha os 60 FPS padrão ou selecione 30 FPS / 15 FPS (Eco Mode) para economizar CPU e bateria sem prejudicar a simulação dos jogos.
 - **Grade 2x2 com 4 Quadrantes Simultâneos:** Jogue até 4 jogos lado a lado sem necessidade de gerenciar múltiplas janelas ou fazer Alt-Tab constante.
 - **⚡ Zero Background Throttling:** As flags de timer do Chromium (`disable-background-timer-throttling`, `disable-backgrounding-occluded-windows`, `backgroundThrottling: false`) estão desativadas. Seus jogos não reduzem ticks por segundo quando a janela está desfocada ou minimizada.
 - **🔇 Controle de Áudio Individual:** Silencie ou ative o som de cada quadrante individualmente, ou use o botão **Silenciar Tudo** na barra superior.
 - **🔍 Controle de Zoom Independente:** Ajuste a escala de 50% a 200% em cada painel para adaptar jogos com interfaces muito pequenas ou densas.
 - **🛠️ DevTools Integrado:** Abra o console de desenvolvedor de qualquer quadrante para importar/exportar saves ou inspecionar o código do jogo.
-- **📑 Presets Prontos & Personalizados:**
-  - *Clássicos:* Cookie Clicker, Universal Paperclips, Candy Box 2, A Dark Room.
-  - *RPG & Estratégia:* Trimps, Melvor Idle, Evolve, Crank.
-  - *Sci-Fi / Números:* Antimatter Dimensions, Synergism, Space Company, Swarm Sim.
-  - *Salvar / Carregar Meu Preset:* Salve seus 4 jogos favoritos para abrir tudo com um único clique.
 - **◫ Alternador de Layouts:**
   - Grade 2x2 (4 telas simétricas).
   - Layout Foco (1 tela principal expandida na esquerda + 3 laterais na direita).
