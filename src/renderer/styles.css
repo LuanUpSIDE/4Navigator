@@ -1,26 +1,32 @@
-/* 4Navigator — Design System & Styles */
+/* 4Navigator — Design System & Styles (Black, Yellow & Blue Theme) */
 :root {
-  --bg-primary: #0a0d14;
-  --bg-secondary: #111622;
-  --bg-tertiary: #182030;
-  --bg-toolbar: rgba(17, 22, 34, 0.95);
-  --border-color: #242f44;
-  --border-focus: #4f46e5;
+  /* Surfaces: Deep Pitch Black & Obsidian */
+  --bg-primary: #05070d;
+  --bg-secondary: #0c1018;
+  --bg-tertiary: #131926;
+  --bg-toolbar: rgba(12, 16, 24, 0.96);
+  --border-color: #1e293b;
+  --border-focus: #38bdf8;
   
-  --text-primary: #f1f5f9;
+  --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
 
-  --accent-cyan: #06b6d4;
+  /* Primary Palette: Electric Blue & Cyber Yellow on Black */
+  --accent-cyan: #38bdf8;       /* Electric Cyan Blue */
+  --accent-blue: #0284c7;       /* Royal Blue */
+  --accent-yellow: #facc15;     /* Cyber Yellow */
+  --accent-yellow-glow: #eab308;
   --accent-purple: #818cf8;
   --accent-emerald: #10b981;
-  --accent-amber: #f59e0b;
+  --accent-amber: #facc15;      /* Yellow for bookmarks/alerts */
   --accent-rose: #f43f5e;
 
-  --slot-1-color: #38bdf8;
-  --slot-2-color: #a855f7;
-  --slot-3-color: #34d399;
-  --slot-4-color: #fb923c;
+  /* Quadrant Slot Badges */
+  --slot-1-color: #38bdf8;      /* Electric Blue */
+  --slot-2-color: #facc15;      /* Cyber Yellow */
+  --slot-3-color: #0ea5e9;      /* Sky Blue */
+  --slot-4-color: #eab308;      /* Gold Yellow */
 
   --radius-sm: 4px;
   --radius-md: 8px;
@@ -195,10 +201,10 @@ body {
 }
 
 .btn-screen-count.active {
-  background: rgba(34, 211, 238, 0.15);
-  color: var(--accent-cyan);
-  border-color: var(--accent-cyan);
-  box-shadow: 0 0 8px rgba(34, 211, 238, 0.35);
+  background: rgba(250, 204, 21, 0.15);
+  color: var(--accent-yellow);
+  border-color: var(--accent-yellow);
+  box-shadow: 0 0 10px rgba(250, 204, 21, 0.4);
 }
 
 .quick-batch-tools {
@@ -369,14 +375,14 @@ body {
 }
 
 .fps-pill.active {
-  background: var(--accent-emerald);
+  background: var(--accent-yellow);
   color: #000;
   font-weight: 700;
-  box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.45);
 }
 
 .fps-pill.active span {
-  color: #052e16;
+  color: #422006;
   font-weight: 600;
 }
 
@@ -575,19 +581,20 @@ body {
 /* ================= Individual Quadrant ================= */
 .quadrant {
   background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   position: relative;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
 }
 
 .quadrant:focus-within,
 .quadrant.is-focused-quadrant {
   border-color: var(--accent-cyan);
-  box-shadow: 0 0 12px rgba(6, 182, 212, 0.25);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.35), inset 0 0 4px rgba(56, 189, 248, 0.1);
 }
 
 .quadrant.is-maximized {
@@ -722,23 +729,24 @@ body {
 
 /* Auto-Clicker Active Effect */
 .btn-action.active-autoclick {
-  color: #fff;
-  background: rgba(16, 185, 129, 0.25);
-  border-color: var(--accent-emerald);
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+  color: #000;
+  background: var(--accent-yellow);
+  border-color: var(--accent-yellow);
+  box-shadow: 0 0 10px rgba(250, 204, 21, 0.7);
   animation: pulseGlow 1.2s infinite alternate;
 }
 
 .autoclick-badge {
-  font-size: 9px;
+  font-size: 10px;
   font-family: var(--font-mono);
-  font-weight: 700;
-  color: var(--accent-emerald);
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.4);
-  padding: 1px 4px;
+  font-weight: 800;
+  color: #000;
+  background: var(--accent-yellow);
+  border: 1px solid var(--accent-yellow-glow);
+  padding: 1px 6px;
   border-radius: var(--radius-sm);
-  letter-spacing: 0.2px;
+  letter-spacing: 0.3px;
+  box-shadow: 0 0 10px rgba(250, 204, 21, 0.5);
 }
 
 .autoclick-badge.hidden {
@@ -747,10 +755,10 @@ body {
 
 @keyframes pulseGlow {
   from {
-    box-shadow: 0 0 4px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 0 4px rgba(250, 204, 21, 0.4);
   }
   to {
-    box-shadow: 0 0 12px rgba(16, 185, 129, 0.8);
+    box-shadow: 0 0 14px rgba(250, 204, 21, 0.9);
   }
 }
 
@@ -1117,29 +1125,29 @@ body.mini-widget-mode .bookmarks-bar {
 
 .hud-total-val {
   font-family: var(--font-mono);
-  color: var(--accent-cyan);
+  color: var(--accent-yellow);
   font-weight: 700;
   font-size: 12px;
-  text-shadow: 0 0 8px rgba(6, 182, 212, 0.5);
+  text-shadow: 0 0 10px rgba(250, 204, 21, 0.6);
 }
 
 .btn-clean-ram {
-  background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
-  border: 1px solid var(--accent-emerald);
+  background: rgba(56, 189, 248, 0.15);
+  color: var(--accent-cyan);
+  border: 1px solid var(--accent-cyan);
   border-radius: var(--radius-sm);
   font-size: 11px;
   font-weight: 700;
   padding: 4px 12px;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
 }
 
 .btn-clean-ram:hover {
-  background: var(--accent-emerald);
+  background: var(--accent-cyan);
   color: #000;
-  box-shadow: 0 0 14px rgba(16, 185, 129, 0.6);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.7);
 }
 
 /* ================= Bookmarks Bar ================= */
