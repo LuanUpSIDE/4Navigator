@@ -21,7 +21,7 @@
     "appId": "com.fournavigator.app",
     "productName": "4Navigator",
     "directories": {
-      "output": "dist"
+      "output": "dist-release"
     },
     "publish": {
       "provider": "github",

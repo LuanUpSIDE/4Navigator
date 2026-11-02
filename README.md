@@ -56,8 +56,7 @@ npm run pack
 
 #### Arquivos Disponíveis para Download (Windows & Linux):
 - **Windows:**
-  - 💾 **[4Navigator Setup 1.1.0.exe](https://github.com/LuanUpSIDE/4Navigator/releases/download/v1.1.0/4Navigator.Setup.1.1.0.exe)** — Instalador padrão para Windows 10/11.
-  - ⚡ **[4Navigator 1.1.0.exe](https://github.com/LuanUpSIDE/4Navigator/releases/download/v1.1.0/4Navigator.1.1.0.exe)** — Versão portátil (sem instalação).
+  - ⚡ **[4Navigator 1.1.0.exe](https://github.com/LuanUpSIDE/4Navigator/releases/download/v1.1.0/4Navigator.1.1.0.exe)** — Executável portátil para Windows 10/11 (executa direto com 2 cliques, sem instalação).
 - **Linux:**
   - 🐧 **[4Navigator-1.1.0.AppImage](https://github.com/LuanUpSIDE/4Navigator/releases/download/v1.1.0/4Navigator-1.1.0.AppImage)** — Executável universal para Linux (dois cliques).
   - 📦 **[4navigator_1.1.0_amd64.deb](https://github.com/LuanUpSIDE/4Navigator/releases/download/v1.1.0/4navigator_1.1.0_amd64.deb)** — Instalador Debian/Ubuntu.
