@@ -22,10 +22,12 @@ Um navegador desktop construído em **Electron** projetado especialmente para en
 - **🔇 Controle de Áudio Individual:** Silencie ou ative o som de cada quadrante individualmente, ou use o botão **Silenciar Tudo** na barra superior.
 - **🔍 Controle de Zoom Independente:** Ajuste a escala de 50% a 200% em cada painel para adaptar jogos com interfaces muito pequenas ou densas.
 - **🛠️ DevTools Integrado:** Abra o console de desenvolvedor de qualquer quadrante para importar/exportar saves ou inspecionar o código do jogo.
-- **◫ Alternador de Layouts:**
-  - Grade 2x2 (4 telas simétricas).
-  - Layout Foco (1 tela principal expandida na esquerda + 3 laterais na direita).
-  - Maximizar Quadrante (expandir temporariamente 1 jogo em tela cheia para ascensão/prestige).
+- **🔲 Seletor Dinâmico de 1 a 4 Telas:** Alterne com 1 clique a quantidade de instâncias visíveis no topo (`[1]`, `[2]`, `[3]`, `[4]`):
+  - **1 Tela:** Foco total em tela cheia para 1 jogo.
+  - **2 Telas:** Divisão balanceada lado a lado (50% / 50%).
+  - **3 Telas:** 1 tela principal expandida na esquerda + 2 menores na lateral direita.
+  - **4 Telas:** Grade 2x2 clássica para quad-play com 4 jogos simultâneos.
+  - O rodapé Resource HUD se adapta automaticamente, exibindo apenas as métricas das telas ativas.
 
 ---
 

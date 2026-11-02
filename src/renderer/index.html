@@ -111,10 +111,15 @@
           </div>
         </div>
 
-        <!-- Layout Selector -->
-        <div class="layout-toggles">
-          <button id="btn-layout-grid" class="btn btn-icon active" title="Grade 2x2 (4 Telas Iguais)">⊞</button>
-          <button id="btn-layout-focus" class="btn btn-icon" title="Layout Foco (1 Principal + 3 Laterais)">◫</button>
+        <!-- Screen Count / Layout Selector (1 to 4 screens) -->
+        <div class="screens-selector-wrapper">
+          <span class="screens-selector-label">Telas:</span>
+          <div class="screens-selector-buttons">
+            <button class="btn-screen-count" data-screens="1" title="1 Tela Cheia (Foco Total)">1</button>
+            <button class="btn-screen-count" data-screens="2" title="2 Telas Divididas (Lado a Lado)">2</button>
+            <button class="btn-screen-count" data-screens="3" title="3 Telas (1 Principal + 2 Secundárias)">3</button>
+            <button class="btn-screen-count active" data-screens="4" title="4 Telas (Grade 2x2 Completa)">4</button>
+          </div>
         </div>
 
         <!-- Mini-Widget Toggle -->

@@ -417,8 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnGlobalMute = document.getElementById('btn-global-mute');
   const globalMuteIcon = document.getElementById('global-mute-icon');
   const btnGlobalReload = document.getElementById('btn-global-reload');
-  const btnLayoutGrid = document.getElementById('btn-layout-grid');
-  const btnLayoutFocus = document.getElementById('btn-layout-focus');
+  const screenCountBtns = document.querySelectorAll('.btn-screen-count');
   const quadrantsViewport = document.getElementById('quadrants-viewport');
   const btnWinMaximize = document.getElementById('btn-win-maximize');
   const btnMiniWidget = document.getElementById('btn-mini-widget');
@@ -612,18 +611,49 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast('Reiniciando os 4 jogos...');
   });
 
-  // Layout Switchers
-  btnLayoutGrid.addEventListener('click', () => {
-    quadrantsViewport.className = 'quadrants-grid layout-2x2';
-    btnLayoutGrid.classList.add('active');
-    btnLayoutFocus.classList.remove('active');
+  // ================= Screen Count Selector (1 to 4 screens) =================
+  let currentScreenCount = Number(localStorage.getItem('4nav_screen_count')) || 4;
+
+  function setScreenCount(count) {
+    currentScreenCount = Math.max(1, Math.min(4, Number(count) || 4));
+    localStorage.setItem('4nav_screen_count', currentScreenCount);
+
+    if (quadrantsViewport) {
+      quadrantsViewport.className = `quadrants-grid layout-screens-${currentScreenCount}`;
+    }
+
+    // Update active button state
+    screenCountBtns.forEach(btn => {
+      const btnScreens = Number(btn.getAttribute('data-screens'));
+      btn.classList.toggle('active', btnScreens === currentScreenCount);
+    });
+
+    // Update HUD slots visibility to match active screen count
+    for (let id = 1; id <= 4; id++) {
+      const slotEl = document.getElementById(`hud-p${id}`);
+      if (slotEl) {
+        slotEl.classList.toggle('hidden', id > currentScreenCount);
+      }
+    }
+
+    const labels = {
+      1: '1 Tela Cheia (Solo)',
+      2: '2 Telas Divididas (Lado a Lado)',
+      3: '3 Telas (1 Principal + 2)',
+      4: '4 Telas (Grade 2x2)'
+    };
+    showToast(`Visualização: ${labels[currentScreenCount]}`);
+  }
+
+  screenCountBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const count = Number(btn.getAttribute('data-screens')) || 4;
+      setScreenCount(count);
+    });
   });
 
-  btnLayoutFocus.addEventListener('click', () => {
-    quadrantsViewport.className = 'quadrants-grid layout-focus';
-    btnLayoutFocus.classList.add('active');
-    btnLayoutGrid.classList.remove('active');
-  });
+  // Apply initial screen count preference
+  setScreenCount(currentScreenCount);
 
   // Mini-Widget Mode
   btnMiniWidget.addEventListener('click', async () => {
