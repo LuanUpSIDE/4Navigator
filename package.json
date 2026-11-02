@@ -1,6 +1,6 @@
 {
   "name": "4navigator",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Desktop browser designed for simultaneous multi-instance idle gaming without background throttling",
   "main": "src/main.js",
   "homepage": "https://github.com/4navigator/4navigator",
