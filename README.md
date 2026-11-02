@@ -53,10 +53,15 @@ npm run dist:deb
 npm run pack
 ```
 
-#### Arquivos Gerados em `dist/`:
-- **`dist/4Navigator-1.0.0.AppImage`**: Executável portátil independente. Dê dois cliques para abrir!
-- **`dist/4navigator_1.0.0_amd64.deb`**: Instalador oficial para o sistema operacional que adiciona o 4Navigator ao menu de aplicativos com ícone oficial.
-- **`dist/linux-unpacked/4navigator`**: Binário Linux puro executável direto.
+#### Arquivos Disponíveis para Download (Windows & Linux):
+- **Windows:**
+  - 💾 **[4Navigator Setup 1.0.0.exe](https://github.com/LuanUpSIDE/4Navigator/releases/download/v1.0.0/4Navigator.Setup.1.0.0.exe)** — Instalador padrão para Windows 10/11.
+  - ⚡ **[4Navigator 1.0.0.exe](https://github.com/LuanUpSIDE/4Navigator/releases/download/v1.0.0/4Navigator.1.0.0.exe)** — Versão portátil (sem instalação).
+- **Linux:**
+  - 🐧 **[4Navigator-1.0.0.AppImage](https://github.com/LuanUpSIDE/4Navigator/releases/download/v1.0.0/4Navigator-1.0.0.AppImage)** — Executável universal para Linux (dois cliques).
+  - 📦 **[4navigator_1.0.0_amd64.deb](https://github.com/LuanUpSIDE/4Navigator/releases/download/v1.0.0/4navigator_1.0.0_amd64.deb)** — Instalador Debian/Ubuntu.
+- 🔗 Todas as versões na **[Página de Releases do GitHub](https://github.com/LuanUpSIDE/4Navigator/releases/tag/v1.0.0)**.
+
 
 
 ---
