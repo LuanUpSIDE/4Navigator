@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>4Navigator — Multi-Quadrant Idle Game Browser</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Global Control Bar -->
+    <header class="global-header">
+      <div class="brand">
+        <img src="icon.png" alt="4Navigator Logo" class="brand-logo-img">
+        <div class="brand-text">
+          <span class="brand-title">4Navigator</span>
+          <span class="brand-subtitle">Idle Engine • Zero-Throttling</span>
+        </div>
+      </div>
+
+      <div class="global-actions">
+        <!-- Preset Dropdown -->
+        <div class="dropdown-wrapper">
+          <button id="btn-presets" class="btn btn-secondary">
+            <span class="icon">📑</span> Presets
+          </button>
+          <div id="presets-menu" class="dropdown-menu hidden">
+            <div class="dropdown-header">Coleções Prontas</div>
+            <button class="dropdown-item" data-preset="classics">
+              🍪 <strong>Clássicos</strong> (Cookie Clicker, Paperclips, Candy Box 2, Dark Room)
+            </button>
+            <button class="dropdown-item" data-preset="progression">
+              ⚔️ <strong>RPG & Estratégia</strong> (Trimps, Melvor, Evolve, Crank)
+            </button>
+            <button class="dropdown-item" data-preset="sci-fi">
+              🚀 <strong>Sci-Fi / Números</strong> (Antimatter Dimensions, Synergism, Space Company, Swarm Sim)
+            </button>
+            <div class="dropdown-divider"></div>
+            <button id="btn-save-custom-preset" class="dropdown-item text-primary">
+              💾 Salvar Quarteto Atual como Meu Preset
+            </button>
+            <button id="btn-load-custom-preset" class="dropdown-item text-success">
+              📂 Carregar Meu Preset Salvo
+            </button>
+          </div>
+        </div>
+
+        <!-- Backup & Saves Dropdown -->
+        <div class="dropdown-wrapper">
+          <button id="btn-backup-menu" class="btn btn-secondary" title="Gerenciador de Saves e Backup">
+            <span class="icon">💾</span> Backup Saves
+          </button>
+          <div id="backup-menu" class="dropdown-menu hidden">
+            <div class="dropdown-header">Gerenciador de Saves</div>
+            <button id="btn-export-backup" class="dropdown-item text-success">
+              ⬇️ <strong>Exportar Backup Completo (.json)</strong>
+            </button>
+            <button id="btn-import-backup-trigger" class="dropdown-item text-primary">
+              ⬆️ <strong>Restaurar Backup (.json)</strong>
+            </button>
+            <input type="file" id="backup-file-input" accept=".json" style="display:none">
+          </div>
+        </div>
+
+        <!-- Layout Selector -->
+        <div class="layout-toggles">
+          <button id="btn-layout-grid" class="btn btn-icon active" title="Grade 2x2 (4 Telas Iguais)">⊞</button>
+          <button id="btn-layout-focus" class="btn btn-icon" title="Layout Foco (1 Principal + 3 Laterais)">◫</button>
+        </div>
+
+        <!-- Mini-Widget Toggle -->
+        <button id="btn-mini-widget" class="btn btn-secondary" title="Alternar Modo Mini-Widget Flutuante (Always-on-Top)">
+          <span class="icon">📌</span> Mini-Widget
+        </button>
+
+        <!-- Notes Drawer Toggle -->
+        <button id="btn-toggle-notes" class="btn btn-secondary" title="Abrir Bloco de Notas Integrado">
+          <span class="icon">📝</span> Notas
+        </button>
+
+        <!-- Global Operations -->
+        <div class="quick-batch-tools">
+          <button id="btn-global-mute" class="btn btn-secondary" title="Silenciar/Ativar áudio de todas as telas">
+            <span id="global-mute-icon">🔊</span> Silenciar Tudo
+          </button>
+          <button id="btn-global-reload" class="btn btn-secondary" title="Recarregar os 4 jogos">
+            <span>🔄</span> Recarregar Tudo
+          </button>
+        </div>
+      </div>
+
+      <div class="window-controls">
+        <!-- FPS Limiter Selector (Default 60 FPS) -->
+        <div class="fps-selector-container">
+          <select id="select-fps" class="select-fps" title="Limitador de Taxa de Quadros (Opcional - Padrão 60 FPS)">
+            <option value="60" selected>⚡ 60 FPS (Padrão)</option>
+            <option value="30">🔋 30 FPS (Eco)</option>
+            <option value="15">💤 15 FPS (Ultra-Eco)</option>
+          </select>
+        </div>
+
+        <button id="btn-win-maximize" class="btn btn-icon" title="Alternar Tela Cheia">🗖</button>
+      </div>
+    </header>
+
+    <!-- Bookmarks Bar -->
+    <div id="bookmarks-bar" class="bookmarks-bar">
+      <div class="bookmarks-label">
+        <span class="bookmark-icon">⭐</span>
+        <span>Favoritos:</span>
+      </div>
+      <div id="bookmarks-list" class="bookmarks-list">
+        <!-- Bookmark chips generated dynamically via app.js -->
+      </div>
+      <button id="btn-add-bookmark-manual" class="btn-add-bookmark" title="Adicionar site aos favoritos">+ Adicionar</button>
+    </div>
+
+    <div class="workspace-layout">
+      <!-- Main 4-Quadrant Viewport -->
+      <main id="quadrants-viewport" class="quadrants-grid layout-2x2">
+        <!-- Quadrant 1 -->
+        <section class="quadrant" id="quadrant-1" data-id="1">
+          <div class="quadrant-toolbar">
+            <span class="slot-badge slot-1">P1</span>
+            <button class="btn-nav btn-back" title="Voltar">‹</button>
+            <button class="btn-nav btn-forward" title="Avançar">›</button>
+            <button class="btn-nav btn-reload" title="Recarregar">↻</button>
+            
+            <div class="url-input-container">
+              <input type="text" class="url-input" placeholder="Digite uma URL ou escolha um jogo..." spellcheck="false">
+              <button class="btn-go" title="Navegar">➔</button>
+            </div>
+
+            <div class="quadrant-actions">
+              <button class="btn-action btn-autoclick" title="Auto-Clicker (Clique para Ligar/Desligar)">🎯</button>
+              <span class="autoclick-badge hidden">20 CPS</span>
+              <button class="btn-action btn-bookmark" title="Adicionar aos Favoritos">⭐</button>
+              <button class="btn-action btn-mute" title="Mutar/Desmutar este jogo">🔊</button>
+              <div class="zoom-group">
+                <button class="btn-action btn-zoom-out" title="Diminuir Zoom">−</button>
+                <span class="zoom-level">100%</span>
+                <button class="btn-action btn-zoom-in" title="Aumentar Zoom">+</button>
+              </div>
+              <button class="btn-action btn-devtools" title="Abrir Console/DevTools">🛠️</button>
+              <button class="btn-action btn-expand" title="Maximizar este quadrante">⤢</button>
+            </div>
+          </div>
+          <div class="webview-wrapper">
+            <div class="loading-bar"></div>
+            <webview class="game-webview" partition="persist:slot1" src="about:blank" allowpopups></webview>
+            <div class="empty-state-overlay">
+              <div class="empty-state-content">
+                <h3>Painel 1</h3>
+                <p>Escolha um jogo idle ou digite a URL acima</p>
+                <div class="game-suggestions">
+                  <button class="chip" data-url="https://orteil.dashnet.org/cookieclicker/">🍪 Cookie Clicker</button>
+                  <button class="chip" data-url="https://trimps.github.io/">🛡️ Trimps</button>
+                  <button class="chip" data-url="https://pmotschmann.github.io/Evolve/">🧬 Evolve</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Quadrant 2 -->
+        <section class="quadrant" id="quadrant-2" data-id="2">
+          <div class="quadrant-toolbar">
+            <span class="slot-badge slot-2">P2</span>
+            <button class="btn-nav btn-back" title="Voltar">‹</button>
+            <button class="btn-nav btn-forward" title="Avançar">›</button>
+            <button class="btn-nav btn-reload" title="Recarregar">↻</button>
+            
+            <div class="url-input-container">
+              <input type="text" class="url-input" placeholder="Digite uma URL ou escolha um jogo..." spellcheck="false">
+              <button class="btn-go" title="Navegar">➔</button>
+            </div>
+
+            <div class="quadrant-actions">
+              <button class="btn-action btn-autoclick" title="Auto-Clicker (Clique para Ligar/Desligar)">🎯</button>
+              <span class="autoclick-badge hidden">20 CPS</span>
+              <button class="btn-action btn-bookmark" title="Adicionar aos Favoritos">⭐</button>
+              <button class="btn-action btn-mute" title="Mutar/Desmutar este jogo">🔊</button>
+              <div class="zoom-group">
+                <button class="btn-action btn-zoom-out" title="Diminuir Zoom">−</button>
+                <span class="zoom-level">100%</span>
+                <button class="btn-action btn-zoom-in" title="Aumentar Zoom">+</button>
+              </div>
+              <button class="btn-action btn-devtools" title="Abrir Console/DevTools">🛠️</button>
+              <button class="btn-action btn-expand" title="Maximizar este quadrante">⤢</button>
+            </div>
+          </div>
+          <div class="webview-wrapper">
+            <div class="loading-bar"></div>
+            <webview class="game-webview" partition="persist:slot2" src="about:blank" allowpopups></webview>
+            <div class="empty-state-overlay">
+              <div class="empty-state-content">
+                <h3>Painel 2</h3>
+                <p>Escolha um jogo idle ou digite a URL acima</p>
+                <div class="game-suggestions">
+                  <button class="chip" data-url="https://www.decisionproblem.com/paperclips/">📎 Universal Paperclips</button>
+                  <button class="chip" data-url="https://adarkroom.doublespeakgames.com/">🔥 A Dark Room</button>
+                  <button class="chip" data-url="https://melvoridle.com/">⚔️ Melvor Idle</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Quadrant 3 -->
+        <section class="quadrant" id="quadrant-3" data-id="3">
+          <div class="quadrant-toolbar">
+            <span class="slot-badge slot-3">P3</span>
+            <button class="btn-nav btn-back" title="Voltar">‹</button>
+            <button class="btn-nav btn-forward" title="Avançar">›</button>
+            <button class="btn-nav btn-reload" title="Recarregar">↻</button>
+            
+            <div class="url-input-container">
+              <input type="text" class="url-input" placeholder="Digite uma URL ou escolha um jogo..." spellcheck="false">
+              <button class="btn-go" title="Navegar">➔</button>
+            </div>
+
+            <div class="quadrant-actions">
+              <button class="btn-action btn-autoclick" title="Auto-Clicker (Clique para Ligar/Desligar)">🎯</button>
+              <span class="autoclick-badge hidden">20 CPS</span>
+              <button class="btn-action btn-bookmark" title="Adicionar aos Favoritos">⭐</button>
+              <button class="btn-action btn-mute" title="Mutar/Desmutar este jogo">🔊</button>
+              <div class="zoom-group">
+                <button class="btn-action btn-zoom-out" title="Diminuir Zoom">−</button>
+                <span class="zoom-level">100%</span>
+                <button class="btn-action btn-zoom-in" title="Aumentar Zoom">+</button>
+              </div>
+              <button class="btn-action btn-devtools" title="Abrir Console/DevTools">🛠️</button>
+              <button class="btn-action btn-expand" title="Maximizar este quadrante">⤢</button>
+            </div>
+          </div>
+          <div class="webview-wrapper">
+            <div class="loading-bar"></div>
+            <webview class="game-webview" partition="persist:slot3" src="about:blank" allowpopups></webview>
+            <div class="empty-state-overlay">
+              <div class="empty-state-content">
+                <h3>Painel 3</h3>
+                <p>Escolha um jogo idle ou digite a URL acima</p>
+                <div class="game-suggestions">
+                  <button class="chip" data-url="https://ivark.github.io/AntimatterDimensions/">♾️ Antimatter Dimensions</button>
+                  <button class="chip" data-url="https://candybox2.github.io/">🍬 Candy Box 2</button>
+                  <button class="chip" data-url="https://dhmholley.co.uk/civclicker.html">🏛️ CivClicker</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Quadrant 4 -->
+        <section class="quadrant" id="quadrant-4" data-id="4">
+          <div class="quadrant-toolbar">
+            <span class="slot-badge slot-4">P4</span>
+            <button class="btn-nav btn-back" title="Voltar">‹</button>
+            <button class="btn-nav btn-forward" title="Avançar">›</button>
+            <button class="btn-nav btn-reload" title="Recarregar">↻</button>
+            
+            <div class="url-input-container">
+              <input type="text" class="url-input" placeholder="Digite uma URL ou escolha um jogo..." spellcheck="false">
+              <button class="btn-go" title="Navegar">➔</button>
+            </div>
+
+            <div class="quadrant-actions">
+              <button class="btn-action btn-autoclick" title="Auto-Clicker (Clique para Ligar/Desligar)">🎯</button>
+              <span class="autoclick-badge hidden">20 CPS</span>
+              <button class="btn-action btn-bookmark" title="Adicionar aos Favoritos">⭐</button>
+              <button class="btn-action btn-mute" title="Mutar/Desmutar este jogo">🔊</button>
+              <div class="zoom-group">
+                <button class="btn-action btn-zoom-out" title="Diminuir Zoom">−</button>
+                <span class="zoom-level">100%</span>
+                <button class="btn-action btn-zoom-in" title="Aumentar Zoom">+</button>
+              </div>
+              <button class="btn-action btn-devtools" title="Abrir Console/DevTools">🛠️</button>
+              <button class="btn-action btn-expand" title="Maximizar este quadrante">⤢</button>
+            </div>
+          </div>
+          <div class="webview-wrapper">
+            <div class="loading-bar"></div>
+            <webview class="game-webview" partition="persist:slot4" src="about:blank" allowpopups></webview>
+            <div class="empty-state-overlay">
+              <div class="empty-state-content">
+                <h3>Painel 4</h3>
+                <p>Escolha um jogo idle ou digite a URL acima</p>
+                <div class="game-suggestions">
+                  <button class="chip" data-url="https://pseudonian.github.io/SynergismOfficial/">✨ Synergism</button>
+                  <button class="chip" data-url="https://sparticle999.github.io/SpaceCompany/">🚀 Space Company</button>
+                  <button class="chip" data-url="https://crank.ncase.me/">⚙️ Crank</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- Retractable Notes Drawer -->
+      <aside id="notes-drawer" class="notes-drawer hidden">
+        <div class="notes-header">
+          <div class="notes-title">
+            <span>📝</span> Bloco de Notas
+          </div>
+          <button id="btn-close-notes" class="btn-nav" title="Fechar Notas">✕</button>
+        </div>
+
+        <div class="notes-tabs">
+          <button class="notes-tab active" data-tab="general">Geral</button>
+          <button class="notes-tab" data-tab="p1">P1</button>
+          <button class="notes-tab" data-tab="p2">P2</button>
+          <button class="notes-tab" data-tab="p3">P3</button>
+          <button class="notes-tab" data-tab="p4">P4</button>
+        </div>
+
+        <div class="notes-body">
+          <textarea id="notes-content" class="notes-textarea" placeholder="Escreva anotações, builds, export codes ou metas para este jogo..." spellcheck="false"></textarea>
+        </div>
+
+        <div class="notes-footer">
+          <span id="notes-char-count" class="notes-info">0 caracteres</span>
+          <div class="notes-actions">
+            <button id="btn-copy-notes" class="btn btn-secondary">Copiar</button>
+            <button id="btn-clear-notes" class="btn btn-secondary">Limpar</button>
+          </div>
+        </div>
+    </div>
+
+    <!-- Bottom Resource & RAM HUD -->
+    <footer id="resource-hud" class="resource-hud">
+      <div class="hud-section hud-brand">
+        <span class="hud-pulse"></span>
+        <span class="hud-title">📊 RAM HUD</span>
+      </div>
+
+      <div class="hud-slots">
+        <div class="hud-slot" id="hud-p1">
+          <span class="slot-badge slot-1">P1</span>
+          <span class="hud-val" id="hud-val-1">-- MB</span>
+        </div>
+        <div class="hud-slot" id="hud-p2">
+          <span class="slot-badge slot-2">P2</span>
+          <span class="hud-val" id="hud-val-2">-- MB</span>
+        </div>
+        <div class="hud-slot" id="hud-p3">
+          <span class="slot-badge slot-3">P3</span>
+          <span class="hud-val" id="hud-val-3">-- MB</span>
+        </div>
+        <div class="hud-slot" id="hud-p4">
+          <span class="slot-badge slot-4">P4</span>
+          <span class="hud-val" id="hud-val-4">-- MB</span>
+        </div>
+      </div>
+
+      <div class="hud-summary">
+        <span class="hud-label">Total 4Nav:</span>
+        <span id="hud-val-total" class="hud-total-val">-- MB</span>
+        <button id="btn-clean-ram" class="btn-clean-ram" title="Limpar cache de rede e liberar memória não utilizada">
+          🧹 Otimizar RAM
+        </button>
+      </div>
+    </footer>
+
+    <!-- Add Bookmark Modal -->
+    <div id="bookmark-modal" class="bookmark-modal hidden">
+      <div class="bookmark-modal-card">
+        <div class="bookmark-modal-header">
+          <h3>⭐ Adicionar aos Favoritos</h3>
+          <button id="btn-close-bookmark-modal" class="btn-nav">✕</button>
+        </div>
+        <div class="bookmark-modal-body">
+          <div class="form-group">
+            <label>Nome do Jogo / Site:</label>
+            <input type="text" id="bookmark-title-input" class="bookmark-input" placeholder="Ex: Cookie Clicker">
+          </div>
+          <div class="form-group">
+            <label>URL:</label>
+            <input type="text" id="bookmark-url-input" class="bookmark-input" placeholder="https://...">
+          </div>
+        </div>
+        <div class="bookmark-modal-footer">
+          <button id="btn-cancel-bookmark" class="btn btn-secondary">Cancelar</button>
+          <button id="btn-save-bookmark" class="btn btn-primary">Salvar Favorito</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

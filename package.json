@@ -1,0 +1,61 @@
+{
+  "name": "4navigator",
+  "version": "1.0.0",
+  "description": "Desktop browser designed for simultaneous multi-instance idle gaming without background throttling",
+  "main": "src/main.js",
+  "homepage": "https://github.com/4navigator/4navigator",
+  "author": {
+    "name": "4Navigator Team",
+    "email": "support@4navigator.app"
+  },
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "dist:appimage": "electron-builder --linux AppImage",
+    "dist:deb": "electron-builder --linux deb",
+    "dist:win": "electron-builder --win",
+    "dist:dir": "electron-builder --linux dir"
+  },
+  "build": {
+    "appId": "com.fournavigator.app",
+    "productName": "4Navigator",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "build/**/*",
+      "package.json"
+    ],
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb",
+        "dir"
+      ],
+      "icon": "build/icon.png",
+      "category": "Game;Network;WebBrowser;",
+      "maintainer": "4Navigator Team <support@4navigator.app>"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "build/icon.png"
+    }
+  },
+  "keywords": [
+    "electron",
+    "idle-games",
+    "browser",
+    "multitasking",
+    "grid"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^41.7.1",
+    "electron-builder": "^26.4.0"
+  }
+}
