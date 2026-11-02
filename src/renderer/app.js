@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnReload = el.querySelector('.btn-reload');
     const btnMute = el.querySelector('.btn-mute');
     const btnBookmark = el.querySelector('.btn-bookmark');
+    const btnCredentials = el.querySelector('.btn-credentials');
     const btnAutoclick = el.querySelector('.btn-autoclick');
     const autoclickBadge = el.querySelector('.autoclick-badge');
     const btnZoomIn = el.querySelector('.btn-zoom-in');
@@ -71,6 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
       urlInput,
       btnMute,
       btnBookmark,
+      btnCredentials,
       emptyState,
       navigateTo(url) {
         if (!url) return;
@@ -164,6 +166,13 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    // Credentials Action for this quadrant
+    if (btnCredentials) {
+      btnCredentials.addEventListener('click', () => {
+        openQuickCredentialsModal(quad);
+      });
+    }
+
     // Auto-Clicker Toggle
     btnAutoclick.addEventListener('click', () => {
       quad.toggleAutoClicker(20);
@@ -228,6 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
         urlInput.value = webview.getURL();
         if (emptyState) emptyState.classList.add('hidden');
         updateBookmarkButtons();
+        updateCredentialButtons();
       }
     });
 
@@ -236,6 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
         urlInput.value = event.url;
         if (emptyState) emptyState.classList.add('hidden');
         updateBookmarkButtons();
+        updateCredentialButtons();
       }
     });
 
@@ -844,6 +855,358 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  // ================= Credentials & Autofill System =================
+  let activeCredQuad = null;
+  let allVaultCredentials = [];
+
+  // DOM Elements - Quick Modal
+  const quickCredModal = document.getElementById('credentials-quick-modal');
+  const btnCloseQuickCred = document.getElementById('btn-close-quick-cred');
+  const btnCancelQuickCred = document.getElementById('btn-cancel-quick-cred');
+  const btnSaveQuickCred = document.getElementById('btn-save-quick-cred');
+  const btnQuickAutofillApply = document.getElementById('btn-quick-autofill-apply');
+  const credDomainInput = document.getElementById('cred-domain-input');
+  const credUsernameInput = document.getElementById('cred-username-input');
+  const credPasswordInput = document.getElementById('cred-password-input');
+  const btnToggleCredPass = document.getElementById('btn-toggle-cred-pass');
+  const credQuickAutofillSection = document.getElementById('cred-quick-autofill-section');
+
+  // DOM Elements - Vault Management Modal
+  const btnOpenVaultModal = document.getElementById('btn-open-vault-modal');
+  const vaultModal = document.getElementById('credentials-vault-modal');
+  const btnCloseVaultModal = document.getElementById('btn-close-vault-modal');
+  const btnVaultClose = document.getElementById('btn-vault-close');
+  const vaultSearchInput = document.getElementById('vault-search-input');
+  const btnVaultAddManual = document.getElementById('btn-vault-add-manual');
+  const vaultListContainer = document.getElementById('vault-list-container');
+
+  // Helper to extract clean domain from URL
+  function extractDomain(url) {
+    if (!url || url === 'about:blank') return '';
+    try {
+      const parsed = new URL(url.startsWith('http') ? url : 'https://' + url);
+      return parsed.hostname.replace(/^www\./i, '');
+    } catch (_) {
+      return url.replace(/^https?:\/\//i, '').split('/')[0];
+    }
+  }
+
+  // Update quadrant toolbar key buttons indicator
+  async function updateCredentialButtons() {
+    if (!window.navigatorAPI?.credentials?.getForUrl) return;
+    for (const q of quadrants) {
+      if (!q.btnCredentials) continue;
+      const currentUrl = (q.webview.getURL() || q.urlInput.value || '').trim();
+      if (!currentUrl || currentUrl === 'about:blank') {
+        q.btnCredentials.classList.remove('has-credentials');
+        q.btnCredentials.title = 'Logins & Senhas Salvas deste Jogo';
+        continue;
+      }
+
+      try {
+        const matches = await window.navigatorAPI.credentials.getForUrl(currentUrl);
+        if (matches && matches.length > 0) {
+          q.btnCredentials.classList.add('has-credentials');
+          q.btnCredentials.title = `🔑 ${matches.length} conta(s) salva(s) para este jogo. Clique para ver ou preencher.`;
+        } else {
+          q.btnCredentials.classList.remove('has-credentials');
+          q.btnCredentials.title = 'Salvar login ou senha para este jogo';
+        }
+      } catch (_) {}
+    }
+  }
+
+  // Open Quick Modal to save or autofill credentials for a quadrant
+  async function openQuickCredentialsModal(quad, manualDomain = '') {
+    activeCredQuad = quad;
+    const currentUrl = (quad?.webview?.getURL() || quad?.urlInput?.value || '').trim();
+    const domain = manualDomain !== '' ? manualDomain : extractDomain(currentUrl);
+
+    if (!quickCredModal) return;
+
+    credDomainInput.value = domain;
+    credDomainInput.readOnly = manualDomain === '' && Boolean(domain);
+    credUsernameInput.value = '';
+    credPasswordInput.value = '';
+    credPasswordInput.type = 'password';
+    if (btnToggleCredPass) btnToggleCredPass.textContent = '👁️';
+
+    if (domain && window.navigatorAPI?.credentials?.getForUrl) {
+      try {
+        const matches = await window.navigatorAPI.credentials.getForUrl(currentUrl || `https://${domain}`);
+        if (matches && matches.length > 0) {
+          const first = matches[0];
+          credUsernameInput.value = first.username || '';
+          credPasswordInput.value = first.password || '';
+          credQuickAutofillSection?.classList.remove('hidden');
+        } else {
+          credQuickAutofillSection?.classList.add('hidden');
+        }
+      } catch (_) {
+        credQuickAutofillSection?.classList.add('hidden');
+      }
+    } else {
+      credQuickAutofillSection?.classList.add('hidden');
+    }
+
+    quickCredModal.classList.remove('hidden');
+    if (!credUsernameInput.value) {
+      credUsernameInput.focus();
+    } else {
+      credPasswordInput.focus();
+    }
+  }
+
+  function closeQuickCredentialsModal() {
+    if (quickCredModal) quickCredModal.classList.add('hidden');
+  }
+
+  // Toggle password visibility
+  if (btnToggleCredPass && credPasswordInput) {
+    btnToggleCredPass.addEventListener('click', () => {
+      if (credPasswordInput.type === 'password') {
+        credPasswordInput.type = 'text';
+        btnToggleCredPass.textContent = '🔒';
+      } else {
+        credPasswordInput.type = 'password';
+        btnToggleCredPass.textContent = '👁️';
+      }
+    });
+  }
+
+  // Close buttons for quick modal
+  btnCloseQuickCred?.addEventListener('click', closeQuickCredentialsModal);
+  btnCancelQuickCred?.addEventListener('click', closeQuickCredentialsModal);
+
+  // Save credential
+  if (btnSaveQuickCred) {
+    btnSaveQuickCred.addEventListener('click', async () => {
+      const domain = (credDomainInput?.value || '').trim();
+      const username = (credUsernameInput?.value || '').trim();
+      const password = credPasswordInput?.value || '';
+
+      if (!domain) {
+        showToast('⚠️ Por favor, informe o domínio ou jogo.');
+        return;
+      }
+      if (!password) {
+        showToast('⚠️ Por favor, digite a senha.');
+        return;
+      }
+
+      try {
+        await window.navigatorAPI.credentials.save({ domain, username, password });
+        showToast(`🔑 Credencial para "${username || domain}" salva com sucesso!`);
+        closeQuickCredentialsModal();
+        updateCredentialButtons();
+
+        if (vaultModal && !vaultModal.classList.contains('hidden')) {
+          await loadVaultList();
+        }
+      } catch (err) {
+        showToast(`Erro ao salvar senha: ${err.message || err}`);
+      }
+    });
+  }
+
+  // Autofill webview helper
+  async function autofillFormInWebview(webview, username, password) {
+    if (!webview) return { success: false, reason: 'no-webview' };
+    const code = `
+      (() => {
+        const passInputs = Array.from(document.querySelectorAll('input[type="password"]'));
+        if (passInputs.length === 0) return { success: false, reason: 'no-password-field' };
+
+        const passInput = passInputs[0];
+        passInput.focus();
+        passInput.value = ${JSON.stringify(password)};
+        passInput.dispatchEvent(new Event('input', { bubbles: true }));
+        passInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+        const form = passInput.closest('form');
+        let userInput = null;
+
+        if (form) {
+          userInput = form.querySelector('input[type="text"], input[type="email"], input[name*="user"], input[name*="login"], input[name*="email"], input[autocomplete*="username"]');
+        }
+        if (!userInput) {
+          userInput = document.querySelector('input[type="text"], input[type="email"], input[name*="user"], input[name*="login"], input[name*="email"], input[autocomplete*="username"]');
+        }
+
+        if (userInput) {
+          userInput.focus();
+          userInput.value = ${JSON.stringify(username)};
+          userInput.dispatchEvent(new Event('input', { bubbles: true }));
+          userInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        passInput.focus();
+        return { success: true };
+      })()
+    `;
+
+    try {
+      const result = await webview.executeJavaScript(code);
+      return result;
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  }
+
+  // Quick autofill button click
+  if (btnQuickAutofillApply) {
+    btnQuickAutofillApply.addEventListener('click', async () => {
+      if (!activeCredQuad) return;
+      const username = (credUsernameInput?.value || '').trim();
+      const password = credPasswordInput?.value || '';
+
+      const res = await autofillFormInWebview(activeCredQuad.webview, username, password);
+      if (res && res.success) {
+        showToast(`⚡ Login preenchido no Painel ${activeCredQuad.id}!`);
+        closeQuickCredentialsModal();
+      } else {
+        showToast('⚠️ Nenhum campo de senha encontrado nesta página.');
+      }
+    });
+  }
+
+  // Vault Modal Functions
+  async function loadVaultList() {
+    if (!window.navigatorAPI?.credentials?.getAll) return;
+    try {
+      allVaultCredentials = await window.navigatorAPI.credentials.getAll();
+      renderVaultList();
+    } catch (err) {
+      console.error('Failed to load vault credentials:', err);
+    }
+  }
+
+  function renderVaultList() {
+    if (!vaultListContainer) return;
+    const filter = (vaultSearchInput?.value || '').trim().toLowerCase();
+
+    const filtered = allVaultCredentials.filter(c => {
+      const dom = (c.domain || '').toLowerCase();
+      const usr = (c.username || '').toLowerCase();
+      return dom.includes(filter) || usr.includes(filter);
+    });
+
+    vaultListContainer.innerHTML = '';
+
+    if (filtered.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'vault-empty-state';
+      empty.innerHTML = `
+        <span class="vault-empty-icon">🔐</span>
+        <strong>Nenhum login salvo encontrado</strong>
+        <span>Suas contas e senhas salvas para os jogos aparecerão aqui.</span>
+      `;
+      vaultListContainer.appendChild(empty);
+      return;
+    }
+
+    filtered.forEach(cred => {
+      const item = document.createElement('div');
+      item.className = 'vault-item';
+
+      const dateStr = cred.updatedAt ? new Date(cred.updatedAt).toLocaleDateString() : '';
+
+      item.innerHTML = `
+        <div class="vault-item-info">
+          <div class="vault-item-domain">
+            <span>🎮</span> <span>${escapeHtml(cred.domain || 'Site')}</span>
+          </div>
+          <div class="vault-item-user">
+            👤 ${escapeHtml(cred.username || 'Sem usuário')}
+          </div>
+          ${dateStr ? `<div class="vault-item-date">Salvo em ${dateStr}</div>` : ''}
+        </div>
+        <div class="vault-item-actions">
+          <button class="btn-vault-action btn-vault-copy" title="Copiar Senha">
+            <span>📋</span> Copiar Senha
+          </button>
+          <button class="btn-vault-action btn-vault-delete" title="Excluir Login">
+            <span>🗑️</span>
+          </button>
+        </div>
+      `;
+
+      // Copy password action
+      const btnCopy = item.querySelector('.btn-vault-copy');
+      btnCopy.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(cred.password);
+          btnCopy.innerHTML = '<span>✅</span> Copiado!';
+          showToast(`Senha de "${cred.username || cred.domain}" copiada!`);
+          setTimeout(() => {
+            btnCopy.innerHTML = '<span>📋</span> Copiar Senha';
+          }, 2000);
+        } catch (_) {
+          showToast('Erro ao copiar senha para a área de transferência.');
+        }
+      });
+
+      // Delete action
+      const btnDel = item.querySelector('.btn-vault-delete');
+      btnDel.addEventListener('click', async () => {
+        if (confirm(`Deseja remover o login "${cred.username}" do jogo ${cred.domain}?`)) {
+          await window.navigatorAPI.credentials.delete(cred.id);
+          showToast('Login removido do cofre com sucesso!');
+          await loadVaultList();
+          updateCredentialButtons();
+        }
+      });
+
+      vaultListContainer.appendChild(item);
+    });
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, s => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[s]));
+  }
+
+  // Open Vault Modal from Options dropdown
+  if (btnOpenVaultModal) {
+    btnOpenVaultModal.addEventListener('click', async () => {
+      if (optionsMenu) optionsMenu.classList.add('hidden');
+      if (vaultModal) vaultModal.classList.remove('hidden');
+      if (vaultSearchInput) vaultSearchInput.value = '';
+      await loadVaultList();
+    });
+  }
+
+  // Close Vault Modal
+  btnCloseVaultModal?.addEventListener('click', () => {
+    if (vaultModal) vaultModal.classList.add('hidden');
+  });
+  btnVaultClose?.addEventListener('click', () => {
+    if (vaultModal) vaultModal.classList.add('hidden');
+  });
+
+  // Search filter
+  vaultSearchInput?.addEventListener('input', () => {
+    renderVaultList();
+  });
+
+  // Add manual credential from Vault
+  btnVaultAddManual?.addEventListener('click', () => {
+    openQuickCredentialsModal(quadrants[0], '');
+    if (credDomainInput) {
+      credDomainInput.readOnly = false;
+      credDomainInput.placeholder = 'Ex: melvoridle.com';
+      credDomainInput.focus();
+    }
+  });
+
+  // Initial check of credential indicators
+  setTimeout(updateCredentialButtons, 1500);
 
   // ================= Auto-Updater Logic =================
   const btnCheckUpdates = document.getElementById('btn-check-updates');

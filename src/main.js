@@ -190,6 +190,136 @@ ipcMain.handle('app:relaunch', () => {
   app.exit(0);
 });
 
+// ================= Credentials Vault (Logins & Passwords) =================
+const credentialsFilePath = path.join(app.getPath('userData'), 'credentials-vault.json');
+
+const crypto = require('crypto');
+const VAULT_SALT = '4Navigator-idle-vault-salt';
+
+function getCryptoKey() {
+  return crypto.scryptSync('4Nav-Secret-Key-2026', VAULT_SALT, 32);
+}
+
+function encryptPassword(text) {
+  if (!text) return '';
+  const iv = crypto.randomBytes(16);
+  const cipher = crypto.createCipheriv('aes-256-gcm', getCryptoKey(), iv);
+  const encrypted = Buffer.concat([cipher.update(text, 'utf8'), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return JSON.stringify({
+    iv: iv.toString('hex'),
+    content: encrypted.toString('hex'),
+    tag: tag.toString('hex')
+  });
+}
+
+function decryptPassword(dataStr) {
+  if (!dataStr) return '';
+  try {
+    const parsed = JSON.parse(dataStr);
+    const decipher = crypto.createDecipheriv(
+      'aes-256-gcm',
+      getCryptoKey(),
+      Buffer.from(parsed.iv, 'hex')
+    );
+    decipher.setAuthTag(Buffer.from(parsed.tag, 'hex'));
+    const decrypted = Buffer.concat([
+      decipher.update(Buffer.from(parsed.content, 'hex')),
+      decipher.final()
+    ]);
+    return decrypted.toString('utf8');
+  } catch (_) {
+    return '';
+  }
+}
+
+function loadCredentialsVault() {
+  try {
+    if (fs.existsSync(credentialsFilePath)) {
+      const raw = fs.readFileSync(credentialsFilePath, 'utf8');
+      return JSON.parse(raw || '[]');
+    }
+  } catch (_) {}
+  return [];
+}
+
+function saveCredentialsVault(vault) {
+  try {
+    fs.writeFileSync(credentialsFilePath, JSON.stringify(vault, null, 2), 'utf8');
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+ipcMain.handle('credentials:get-all', () => {
+  const vault = loadCredentialsVault();
+  return vault.map(c => ({
+    id: c.id,
+    title: c.title,
+    domain: c.domain,
+    username: c.username,
+    password: decryptPassword(c.password),
+    updatedAt: c.updatedAt
+  }));
+});
+
+ipcMain.handle('credentials:get-for-url', (event, url) => {
+  if (!url) return [];
+  try {
+    const domain = new URL(url).hostname.replace(/^www\./, '').toLowerCase();
+    const vault = loadCredentialsVault();
+    const matches = vault.filter(c => {
+      const savedDomain = (c.domain || '').replace(/^www\./, '').toLowerCase();
+      return domain.includes(savedDomain) || savedDomain.includes(domain);
+    });
+    return matches.map(c => ({
+      id: c.id,
+      title: c.title,
+      domain: c.domain,
+      username: c.username,
+      password: decryptPassword(c.password),
+      updatedAt: c.updatedAt
+    }));
+  } catch (_) {
+    return [];
+  }
+});
+
+ipcMain.handle('credentials:save', (event, entry) => {
+  if (!entry || !entry.username) return { success: false, error: 'Usuário é obrigatório' };
+  const vault = loadCredentialsVault();
+  const id = entry.id || Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const encryptedPass = encryptPassword(entry.password || '');
+
+  const index = vault.findIndex(item => item.id === id);
+  const record = {
+    id,
+    title: entry.title || entry.domain || 'Login do Jogo',
+    domain: (entry.domain || '').toLowerCase().replace(/^www\./, ''),
+    username: entry.username.trim(),
+    password: encryptedPass,
+    updatedAt: new Date().toISOString()
+  };
+
+  if (index >= 0) {
+    vault[index] = record;
+  } else {
+    vault.push(record);
+  }
+
+  saveCredentialsVault(vault);
+  return { success: true, id };
+});
+
+ipcMain.handle('credentials:delete', (event, id) => {
+  if (!id) return false;
+  const vault = loadCredentialsVault();
+  const filtered = vault.filter(item => item.id !== id);
+  saveCredentialsVault(filtered);
+  return true;
+});
+
 // Auto-Updater Handlers & Events
 ipcMain.handle('updater:check', async () => {
   try {

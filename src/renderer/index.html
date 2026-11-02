@@ -108,6 +108,16 @@
                 <button id="btn-relaunch-app" class="btn-restart-pill" title="Reiniciar 4Navigator agora">Reiniciar Agora</button>
               </div>
             </div>
+
+            <!-- Section 5: Logins & Senhas -->
+            <div class="dropdown-section-title">
+              <span>🔑 Logins & Senhas Salvas</span>
+            </div>
+            <div class="options-credentials-container">
+              <button id="btn-open-vault-modal" class="dropdown-item text-primary" title="Abrir Gerenciador de Logins e Senhas">
+                <span>🔐</span> <strong>Gerenciar Contas & Senhas Salvas</strong>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -183,6 +193,7 @@
             <div class="quadrant-actions">
               <button class="btn-action btn-autoclick" title="Auto-Clicker (Clique para Ligar/Desligar)">🎯</button>
               <span class="autoclick-badge hidden">20 CPS</span>
+              <button class="btn-action btn-credentials" title="Logins & Senhas Salvas deste Jogo">🔑</button>
               <button class="btn-action btn-bookmark" title="Adicionar aos Favoritos">⭐</button>
               <button class="btn-action btn-mute" title="Mutar/Desmutar este jogo">🔊</button>
               <div class="zoom-group">
@@ -227,6 +238,7 @@
             <div class="quadrant-actions">
               <button class="btn-action btn-autoclick" title="Auto-Clicker (Clique para Ligar/Desligar)">🎯</button>
               <span class="autoclick-badge hidden">20 CPS</span>
+              <button class="btn-action btn-credentials" title="Logins & Senhas Salvas deste Jogo">🔑</button>
               <button class="btn-action btn-bookmark" title="Adicionar aos Favoritos">⭐</button>
               <button class="btn-action btn-mute" title="Mutar/Desmutar este jogo">🔊</button>
               <div class="zoom-group">
@@ -271,6 +283,7 @@
             <div class="quadrant-actions">
               <button class="btn-action btn-autoclick" title="Auto-Clicker (Clique para Ligar/Desligar)">🎯</button>
               <span class="autoclick-badge hidden">20 CPS</span>
+              <button class="btn-action btn-credentials" title="Logins & Senhas Salvas deste Jogo">🔑</button>
               <button class="btn-action btn-bookmark" title="Adicionar aos Favoritos">⭐</button>
               <button class="btn-action btn-mute" title="Mutar/Desmutar este jogo">🔊</button>
               <div class="zoom-group">
@@ -315,6 +328,7 @@
             <div class="quadrant-actions">
               <button class="btn-action btn-autoclick" title="Auto-Clicker (Clique para Ligar/Desligar)">🎯</button>
               <span class="autoclick-badge hidden">20 CPS</span>
+              <button class="btn-action btn-credentials" title="Logins & Senhas Salvas deste Jogo">🔑</button>
               <button class="btn-action btn-bookmark" title="Adicionar aos Favoritos">⭐</button>
               <button class="btn-action btn-mute" title="Mutar/Desmutar este jogo">🔊</button>
               <div class="zoom-group">
@@ -477,7 +491,67 @@
       </div>
     </div>
 
-    <!-- Toast Notification Container -->
+    <!-- Save/Fill Credential Quick Modal -->
+    <div id="credentials-quick-modal" class="bookmark-modal hidden">
+      <div class="bookmark-modal-card credentials-card">
+        <div class="bookmark-modal-header">
+          <h3>🔑 Salvar Login para este Jogo</h3>
+          <button id="btn-close-quick-cred" class="btn-nav">✕</button>
+        </div>
+        <div class="bookmark-modal-body">
+          <div class="form-group">
+            <label>Jogo / Domínio:</label>
+            <input type="text" id="cred-domain-input" class="bookmark-input" readonly>
+          </div>
+          <div class="form-group">
+            <label>Usuário / Email / Login:</label>
+            <input type="text" id="cred-username-input" class="bookmark-input" placeholder="Seu nome de usuário ou email">
+          </div>
+          <div class="form-group">
+            <label>Senha:</label>
+            <div class="password-input-wrapper">
+              <input type="password" id="cred-password-input" class="bookmark-input" placeholder="Sua senha">
+              <button type="button" id="btn-toggle-cred-pass" class="btn-toggle-eye">👁️</button>
+            </div>
+          </div>
+          <div id="cred-quick-autofill-section" class="cred-quick-autofill hidden">
+            <div class="dropdown-divider"></div>
+            <button id="btn-quick-autofill-apply" class="btn btn-secondary text-primary" style="width: 100%;">
+              ⚡ <strong>Preencher Formulário na Tela Agora</strong>
+            </button>
+          </div>
+        </div>
+        <div class="bookmark-modal-footer">
+          <button id="btn-cancel-quick-cred" class="btn btn-secondary">Cancelar</button>
+          <button id="btn-save-quick-cred" class="btn btn-primary">Salvar Senha</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Credentials Vault Management Modal -->
+    <div id="credentials-vault-modal" class="updater-modal hidden">
+      <div class="updater-modal-card vault-modal-card">
+        <div class="updater-modal-header">
+          <div class="updater-title">
+            <span class="updater-icon">🔐</span>
+            <h3>Cofre de Logins & Senhas Salvas</h3>
+          </div>
+          <button id="btn-close-vault-modal" class="btn-nav">✕</button>
+        </div>
+        <div class="updater-modal-body">
+          <div class="vault-top-actions">
+            <input type="text" id="vault-search-input" class="bookmark-input vault-search" placeholder="Buscar por jogo ou usuário...">
+            <button id="btn-vault-add-manual" class="btn btn-secondary text-primary">+ Novo Login</button>
+          </div>
+          <div id="vault-list-container" class="vault-list-container">
+            <!-- Dynamic saved accounts list -->
+          </div>
+        </div>
+        <div class="updater-modal-footer">
+          <button id="btn-vault-close" class="btn btn-secondary">Fechar</button>
+        </div>
+      </div>
+    </div>
     <div id="toast-container" class="toast-container"></div>
   </div>
 

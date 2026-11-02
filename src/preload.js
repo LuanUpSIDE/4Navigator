@@ -24,5 +24,11 @@ contextBridge.exposeInMainWorld('navigatorAPI', {
       ipcRenderer.on('updater:status', subscription);
       return () => ipcRenderer.removeListener('updater:status', subscription);
     }
+  },
+  credentials: {
+    getAll: () => ipcRenderer.invoke('credentials:get-all'),
+    getForUrl: (url) => ipcRenderer.invoke('credentials:get-for-url', url),
+    save: (entry) => ipcRenderer.invoke('credentials:save', entry),
+    delete: (id) => ipcRenderer.invoke('credentials:delete', id)
   }
 });

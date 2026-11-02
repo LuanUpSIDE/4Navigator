@@ -11,6 +11,11 @@ Um navegador desktop construído em **Electron** projetado especialmente para en
   - **💾 Gerenciador de Backup & Restauração:** Exportação e restauração de saves em formato `.json`.
   - **⚡ Limitador de FPS Interativo:** Botões pill para alternar entre 60 FPS (Padrão), 30 FPS (Eco) e 15 FPS (Ultra-Eco).
   - **🖥️ Aceleração de Hardware por GPU (Opcional - Padrão Ligada):** Interruptor toggle para ativar ou desativar a aceleração gráfica por hardware da GPU, com persistência e reinicialização rápida.
+  - **🔐 Cofre de Logins & Senhas Salvas (Criptografia AES-256):** Gerencie todas as suas contas, credenciais e logins de jogos em um painel seguro centralizado, com cópia rápida para a área de transferência e busca inteligente.
+- **🔑 Salvar Login e Preenchimento Automático por Quadrante:**
+  - Botão de chave (`🔑`) na barra de ferramentas de cada quadrante com indicação luminosa quando o jogo possui credencial salva.
+  - Modal rápido para salvar usuário e senha para o domínio do jogo atual.
+  - **⚡ Preenchimento Automático Direto na Tela:** Botão para injetar instantaneamente o login e a senha nos campos de formulário do jogo dentro do webview com simulação de eventos para máxima compatibilidade com React, Vue e WebGL.
 - **🔄 Sistema de Atualização Direto no Navegador (In-App Auto-Update):** Verifique e baixe novas versões diretamente pelo botão de **Atualizações** na barra superior ou através da verificação automática integrada com o GitHub Releases (`electron-updater`).
 - **⭐ Barra de Favoritos & Adicionar aos Favoritos:** Barra horizontal dedicada logo abaixo do cabeçalho com acesso rápido aos seus jogos favoritos. Adicione qualquer site aos favoritos com 1 clique no botão de estrela (`⭐`) de cada quadrante ou pelo botão `+ Adicionar` manual, com persistência e remoção simplificada.
 - **📊 Monitor de Memória RAM & Consumo em Tempo Real:** Barra de status no rodapé (Resource HUD) que exibe o consumo individual de memória RAM e CPU de cada quadrante (`P1` a `P4`), a memória total consumida pelo navegador e um botão de **🧹 Otimizar RAM** para limpar caches e liberar memória imediatamente.
