@@ -6,6 +6,7 @@ Um navegador desktop construído em **Electron** projetado especialmente para en
 
 ## ✨ Principais Recursos
 
+- **🔄 Sistema de Atualização Direto no Navegador (In-App Auto-Update):** Verifique e baixe novas versões diretamente pelo botão de **Atualizações** na barra superior ou através da verificação automática integrada com o GitHub Releases (`electron-updater`). Acompanhe o progresso de download em tempo real e reinicie com um clique para aplicar a nova versão sem precisar baixar instaladores manualmente.
 - **⭐ Barra de Favoritos & Adicionar aos Favoritos:** Barra horizontal dedicada logo abaixo do cabeçalho com acesso rápido aos seus jogos favoritos. Adicione qualquer site aos favoritos com 1 clique no botão de estrela (`⭐`) de cada quadrante ou pelo botão `+ Adicionar` manual, com persistência e remoção simplificada.
 - **📊 Monitor de Memória RAM & Consumo em Tempo Real:** Barra de status no rodapé (Resource HUD) que exibe o consumo individual de memória RAM e CPU de cada quadrante (`P1` a `P4`), a memória total consumida pelo navegador e um botão de **🧹 Otimizar RAM** para limpar caches e liberar memória imediatamente.
 - **🎯 Auto-Clicker Integrado por Quadrante:** Ative ou desative cliques contínuos (20 CPS) em qualquer um dos 4 quadrantes com um clique no botão de mira (`🎯`) ou feedback visual luminoso.

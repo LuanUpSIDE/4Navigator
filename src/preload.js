@@ -10,5 +10,16 @@ contextBridge.exposeInMainWorld('navigatorAPI', {
   getMetrics: () => ipcRenderer.invoke('app:get-metrics'),
   clearCache: () => ipcRenderer.invoke('app:clear-cache'),
   openExternal: (url) => ipcRenderer.invoke('app:open-external', url),
-  platform: process.platform
+  platform: process.platform,
+  updater: {
+    check: () => ipcRenderer.invoke('updater:check'),
+    download: () => ipcRenderer.invoke('updater:download'),
+    install: () => ipcRenderer.invoke('updater:install'),
+    getCurrentVersion: () => ipcRenderer.invoke('updater:get-current-version'),
+    onStatus: (callback) => {
+      const subscription = (event, data) => callback(data);
+      ipcRenderer.on('updater:status', subscription);
+      return () => ipcRenderer.removeListener('updater:status', subscription);
+    }
+  }
 });

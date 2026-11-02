@@ -86,6 +86,10 @@
           <button id="btn-global-reload" class="btn btn-secondary" title="Recarregar os 4 jogos">
             <span>🔄</span> Recarregar Tudo
           </button>
+          <button id="btn-check-updates" class="btn btn-secondary btn-updater-badge" title="Verificar atualizações do 4Navigator">
+            <span class="icon">🔄</span> <span id="updater-btn-text">Atualizações</span>
+            <span id="updater-badge-dot" class="updater-dot hidden"></span>
+          </button>
         </div>
       </div>
 
@@ -380,6 +384,50 @@
         <div class="bookmark-modal-footer">
           <button id="btn-cancel-bookmark" class="btn btn-secondary">Cancelar</button>
           <button id="btn-save-bookmark" class="btn btn-primary">Salvar Favorito</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auto-Updater Modal -->
+    <div id="updater-modal" class="updater-modal hidden">
+      <div class="updater-modal-card">
+        <div class="updater-modal-header">
+          <div class="updater-title">
+            <span class="updater-icon">🔄</span>
+            <h3>Atualizador 4Navigator</h3>
+          </div>
+          <button id="btn-close-updater-modal" class="btn-nav">✕</button>
+        </div>
+        <div class="updater-modal-body">
+          <div class="updater-version-info">
+            <div class="version-badge">Versão Atual: <strong id="updater-curr-version">v1.0.0</strong></div>
+            <div id="updater-target-version" class="version-badge new-ver hidden">Nova Versão: <strong id="updater-new-version">v1.0.1</strong></div>
+          </div>
+
+          <div id="updater-status-message" class="updater-status-message">
+            Clique abaixo para verificar se há novas atualizações disponíveis no GitHub.
+          </div>
+
+          <!-- Download Progress Container -->
+          <div id="updater-progress-container" class="updater-progress-container hidden">
+            <div class="progress-bar-bg">
+              <div id="updater-progress-bar" class="progress-bar-fill" style="width: 0%"></div>
+            </div>
+            <div class="progress-meta">
+              <span id="updater-progress-percent">0%</span>
+              <span id="updater-progress-speed">-- KB/s</span>
+            </div>
+          </div>
+
+          <!-- Release Notes -->
+          <div id="updater-notes-container" class="updater-notes-container hidden">
+            <label>Novidades da Versão:</label>
+            <div id="updater-release-notes" class="updater-release-notes"></div>
+          </div>
+        </div>
+        <div class="updater-modal-footer">
+          <button id="btn-updater-cancel" class="btn btn-secondary">Fechar</button>
+          <button id="btn-updater-action" class="btn btn-primary">Verificar Agora</button>
         </div>
       </div>
     </div>

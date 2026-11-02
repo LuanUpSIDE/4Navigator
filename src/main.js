@@ -1,5 +1,10 @@
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
+const { autoUpdater } = require('electron-updater');
+
+// Configure autoUpdater
+autoUpdater.autoDownload = false;
+autoUpdater.autoInstallOnAppQuit = true;
 
 // Disable background throttling for idle games to keep progressing at full speed
 app.commandLine.appendSwitch('disable-background-timer-throttling');
@@ -133,6 +138,83 @@ ipcMain.handle('app:open-external', async (event, url) => {
   if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
     await shell.openExternal(url);
   }
+});
+
+// Auto-Updater Handlers & Events
+ipcMain.handle('updater:check', async () => {
+  try {
+    const result = await autoUpdater.checkForUpdates();
+    return { success: true, updateInfo: result?.updateInfo || null };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('updater:download', async () => {
+  try {
+    await autoUpdater.downloadUpdate();
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('updater:install', () => {
+  autoUpdater.quitAndInstall();
+});
+
+ipcMain.handle('updater:get-current-version', () => {
+  return app.getVersion();
+});
+
+function sendUpdaterStatus(channel, data) {
+  if (mainWindow && mainWindow.webContents) {
+    mainWindow.webContents.send(channel, data);
+  }
+}
+
+autoUpdater.on('checking-for-update', () => {
+  sendUpdaterStatus('updater:status', { state: 'checking' });
+});
+
+autoUpdater.on('update-available', (info) => {
+  sendUpdaterStatus('updater:status', {
+    state: 'available',
+    version: info.version,
+    releaseDate: info.releaseDate,
+    releaseNotes: info.releaseNotes || 'Nova versão com melhorias e correções.'
+  });
+});
+
+autoUpdater.on('update-not-available', (info) => {
+  sendUpdaterStatus('updater:status', {
+    state: 'not-available',
+    version: info.version
+  });
+});
+
+autoUpdater.on('error', (err) => {
+  sendUpdaterStatus('updater:status', {
+    state: 'error',
+    message: err == null ? 'Erro desconhecido ao verificar atualizações' : (err.stack || err).toString()
+  });
+});
+
+autoUpdater.on('download-progress', (progressObj) => {
+  sendUpdaterStatus('updater:status', {
+    state: 'downloading',
+    percent: Math.round(progressObj.percent),
+    bytesPerSecond: progressObj.bytesPerSecond,
+    transferred: progressObj.transferred,
+    total: progressObj.total
+  });
+});
+
+autoUpdater.on('update-downloaded', (info) => {
+  sendUpdaterStatus('updater:status', {
+    state: 'downloaded',
+    version: info.version
+  });
 });
 
 app.whenReady().then(() => {

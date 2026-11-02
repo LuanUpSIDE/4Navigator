@@ -768,6 +768,193 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ================= Auto-Updater Logic =================
+  const btnCheckUpdates = document.getElementById('btn-check-updates');
+  const updaterBadgeDot = document.getElementById('updater-badge-dot');
+  const updaterModal = document.getElementById('updater-modal');
+  const btnCloseUpdaterModal = document.getElementById('btn-close-updater-modal');
+  const btnUpdaterCancel = document.getElementById('btn-updater-cancel');
+  const btnUpdaterAction = document.getElementById('btn-updater-action');
+  const updaterCurrVersion = document.getElementById('updater-curr-version');
+  const updaterTargetVersion = document.getElementById('updater-target-version');
+  const updaterNewVersion = document.getElementById('updater-new-version');
+  const updaterStatusMessage = document.getElementById('updater-status-message');
+  const updaterProgressContainer = document.getElementById('updater-progress-container');
+  const updaterProgressBar = document.getElementById('updater-progress-bar');
+  const updaterProgressPercent = document.getElementById('updater-progress-percent');
+  const updaterProgressSpeed = document.getElementById('updater-progress-speed');
+  const updaterNotesContainer = document.getElementById('updater-notes-container');
+  const updaterReleaseNotes = document.getElementById('updater-release-notes');
+
+  let updaterCurrentState = 'idle'; // idle | checking | available | downloading | downloaded | error
+
+  // Fetch current version on load
+  if (window.navigatorAPI?.updater?.getCurrentVersion) {
+    window.navigatorAPI.updater.getCurrentVersion().then(ver => {
+      if (updaterCurrVersion && ver) updaterCurrVersion.textContent = `v${ver}`;
+    }).catch(() => {});
+  }
+
+  function openUpdaterModal() {
+    if (updaterModal) updaterModal.classList.remove('hidden');
+  }
+
+  function closeUpdaterModal() {
+    if (updaterModal) updaterModal.classList.add('hidden');
+  }
+
+  if (btnCheckUpdates) {
+    btnCheckUpdates.addEventListener('click', () => {
+      openUpdaterModal();
+      if (updaterCurrentState === 'idle' || updaterCurrentState === 'error') {
+        triggerCheckForUpdates();
+      }
+    });
+  }
+
+  if (btnCloseUpdaterModal) btnCloseUpdaterModal.addEventListener('click', closeUpdaterModal);
+  if (btnUpdaterCancel) btnUpdaterCancel.addEventListener('click', closeUpdaterModal);
+
+  async function triggerCheckForUpdates() {
+    if (!window.navigatorAPI?.updater?.check) {
+      showToast('⚠️ Atualizações automáticas não disponíveis em modo de desenvolvimento.');
+      return;
+    }
+    updaterCurrentState = 'checking';
+    updaterStatusMessage.textContent = 'Verificando atualizações no GitHub...';
+    btnUpdaterAction.disabled = true;
+    btnUpdaterAction.textContent = 'Verificando...';
+    updaterProgressContainer.classList.add('hidden');
+    updaterNotesContainer.classList.add('hidden');
+
+    try {
+      const res = await window.navigatorAPI.updater.check();
+      if (!res.success && res.error) {
+        updaterCurrentState = 'error';
+        updaterStatusMessage.textContent = `Não foi possível verificar: ${res.error}`;
+        btnUpdaterAction.disabled = false;
+        btnUpdaterAction.textContent = 'Tentar Novamente';
+      }
+    } catch (err) {
+      updaterCurrentState = 'error';
+      updaterStatusMessage.textContent = `Erro ao verificar atualizações: ${err.message || err}`;
+      btnUpdaterAction.disabled = false;
+      btnUpdaterAction.textContent = 'Tentar Novamente';
+    }
+  }
+
+  if (btnUpdaterAction) {
+    btnUpdaterAction.addEventListener('click', async () => {
+      if (updaterCurrentState === 'idle' || updaterCurrentState === 'error' || updaterCurrentState === 'not-available') {
+        await triggerCheckForUpdates();
+      } else if (updaterCurrentState === 'available') {
+        updaterCurrentState = 'downloading';
+        btnUpdaterAction.disabled = true;
+        btnUpdaterAction.textContent = 'Baixando...';
+        updaterStatusMessage.textContent = 'Baixando nova versão em segundo plano...';
+        updaterProgressContainer.classList.remove('hidden');
+        updaterProgressBar.style.width = '0%';
+        updaterProgressPercent.textContent = '0%';
+        try {
+          await window.navigatorAPI.updater.download();
+        } catch (e) {
+          updaterCurrentState = 'error';
+          updaterStatusMessage.textContent = `Erro no download: ${e.message || e}`;
+          btnUpdaterAction.disabled = false;
+          btnUpdaterAction.textContent = 'Tentar Novamente';
+        }
+      } else if (updaterCurrentState === 'downloaded') {
+        updaterStatusMessage.textContent = 'Reiniciando o 4Navigator para aplicar a atualização...';
+        btnUpdaterAction.disabled = true;
+        btnUpdaterAction.textContent = 'Instalando...';
+        setTimeout(() => {
+          window.navigatorAPI?.updater?.install();
+        }, 800);
+      }
+    });
+  }
+
+  // Listen to main process updater events
+  if (window.navigatorAPI?.updater?.onStatus) {
+    window.navigatorAPI.updater.onStatus((data) => {
+      if (!data) return;
+
+      switch (data.state) {
+        case 'checking':
+          updaterCurrentState = 'checking';
+          updaterStatusMessage.textContent = 'Conectando ao repositório para verificar novidades...';
+          btnUpdaterAction.disabled = true;
+          btnUpdaterAction.textContent = 'Verificando...';
+          break;
+
+        case 'available':
+          updaterCurrentState = 'available';
+          updaterBadgeDot?.classList.remove('hidden');
+          updaterTargetVersion?.classList.remove('hidden');
+          if (updaterNewVersion && data.version) updaterNewVersion.textContent = `v${data.version}`;
+          updaterStatusMessage.textContent = `Uma nova versão (v${data.version}) foi encontrada!`;
+          if (data.releaseNotes && updaterReleaseNotes) {
+            updaterReleaseNotes.textContent = data.releaseNotes;
+            updaterNotesContainer?.classList.remove('hidden');
+          }
+          btnUpdaterAction.disabled = false;
+          btnUpdaterAction.textContent = 'Baixar Atualização';
+          showToast(`🚀 Nova versão v${data.version} disponível!`);
+          break;
+
+        case 'not-available':
+          updaterCurrentState = 'not-available';
+          updaterBadgeDot?.classList.add('hidden');
+          updaterTargetVersion?.classList.add('hidden');
+          updaterStatusMessage.textContent = 'O 4Navigator já está na versão mais recente disponível! 🎉';
+          btnUpdaterAction.disabled = false;
+          btnUpdaterAction.textContent = 'Verificar Novamente';
+          showToast('✅ Seu navegador está 100% atualizado.');
+          break;
+
+        case 'downloading':
+          updaterCurrentState = 'downloading';
+          updaterProgressContainer?.classList.remove('hidden');
+          if (updaterProgressBar && data.percent !== undefined) {
+            updaterProgressBar.style.width = `${data.percent}%`;
+            updaterProgressPercent.textContent = `${data.percent}%`;
+          }
+          if (updaterProgressSpeed && data.bytesPerSecond) {
+            const kbps = Math.round(data.bytesPerSecond / 1024);
+            updaterProgressSpeed.textContent = `${kbps} KB/s`;
+          }
+          break;
+
+        case 'downloaded':
+          updaterCurrentState = 'downloaded';
+          updaterProgressContainer?.classList.remove('hidden');
+          if (updaterProgressBar) updaterProgressBar.style.width = '100%';
+          if (updaterProgressPercent) updaterProgressPercent.textContent = '100%';
+          updaterStatusMessage.textContent = 'Download concluído com sucesso! Clique para reiniciar e aplicar agora.';
+          btnUpdaterAction.disabled = false;
+          btnUpdaterAction.textContent = 'Reiniciar e Atualizar';
+          btnUpdaterAction.className = 'btn btn-primary';
+          showToast('📦 Atualização pronta para ser instalada!');
+          openUpdaterModal();
+          break;
+
+        case 'error':
+          updaterCurrentState = 'error';
+          updaterStatusMessage.textContent = `Falha na verificação de atualização: ${data.message || 'Erro de rede'}`;
+          btnUpdaterAction.disabled = false;
+          btnUpdaterAction.textContent = 'Tentar Novamente';
+          break;
+      }
+    });
+  }
+
+  // Optional: Auto-check for updates silently 5 seconds after startup
+  setTimeout(() => {
+    if (window.navigatorAPI?.updater?.check) {
+      window.navigatorAPI.updater.check().catch(() => {});
+    }
+  }, 5000);
+
   // Auto-save session on close or page hide
   window.addEventListener('beforeunload', () => {
     const currentUrls = quadrants.map(q => q.webview.getURL() || q.urlInput.value || '');

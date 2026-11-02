@@ -23,6 +23,12 @@
     "directories": {
       "output": "dist"
     },
+    "publish": {
+      "provider": "github",
+      "owner": "LuanUpSIDE",
+      "repo": "4Navigator",
+      "private": true
+    },
     "files": [
       "src/**/*",
       "build/**/*",
@@ -57,5 +63,8 @@
   "devDependencies": {
     "electron": "^41.7.1",
     "electron-builder": "^26.4.0"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.11"
   }
 }
