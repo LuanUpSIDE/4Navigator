@@ -1,4 +1,10 @@
 node_modules/
 dist/
+dist-release/
 .DS_Store
 *.log
+
+# AI agent & toolkit workspace directories
+.agents/
+.gemini/
+.antigravity/

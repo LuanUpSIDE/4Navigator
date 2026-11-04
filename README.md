@@ -90,7 +90,6 @@ npm run pack
 │       ├── styles.css    # Design System dark mode gamer com CSS Grid responsivo
 │       └── app.js        # Lógica de controle de navegação, zoom, mute e presets
 ├── package.json          # Metadados e dependência do Electron
-├── 4navigator-browser.md # Plano de tarefas e critérios de conclusão
 └── README.md
 ```
 
