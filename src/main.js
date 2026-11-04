@@ -3,13 +3,34 @@ const path = require('path');
 const fs = require('fs');
 const { autoUpdater } = require('electron-updater');
 
+// Storage Directory resolver: Portable vs Installed
+function getStorageDirectory() {
+  const portableDir = process.env.PORTABLE_EXECUTABLE_DIR;
+  if (portableDir) {
+    const portableDataDir = path.join(portableDir, '4Navigator-Data');
+    try {
+      if (!fs.existsSync(portableDataDir)) {
+        fs.mkdirSync(portableDataDir, { recursive: true });
+      }
+      return portableDataDir;
+    } catch (_) {}
+  }
+  return app.getPath('userData');
+}
+
 // Configuration file for persistent app settings (e.g., GPU hardware acceleration)
-const configFilePath = path.join(app.getPath('userData'), 'app-settings.json');
+const configFilePath = path.join(getStorageDirectory(), 'app-settings.json');
+const notesFilePath = path.join(getStorageDirectory(), 'notes-data.json');
 
 function loadAppSettings() {
   try {
     if (fs.existsSync(configFilePath)) {
       const content = fs.readFileSync(configFilePath, 'utf8');
+      return JSON.parse(content || '{}');
+    }
+    const fallbackPath = path.join(app.getPath('userData'), 'app-settings.json');
+    if (configFilePath !== fallbackPath && fs.existsSync(fallbackPath)) {
+      const content = fs.readFileSync(fallbackPath, 'utf8');
       return JSON.parse(content || '{}');
     }
   } catch (_) {}
@@ -21,6 +42,12 @@ function saveAppSettings(settings) {
     const current = loadAppSettings();
     const updated = { ...current, ...settings };
     fs.writeFileSync(configFilePath, JSON.stringify(updated, null, 2), 'utf8');
+    const fallbackPath = path.join(app.getPath('userData'), 'app-settings.json');
+    if (configFilePath !== fallbackPath) {
+      try {
+        fs.writeFileSync(fallbackPath, JSON.stringify(updated, null, 2), 'utf8');
+      } catch (_) {}
+    }
     return true;
   } catch (_) {
     return false;
@@ -195,7 +222,7 @@ ipcMain.handle('app:relaunch', () => {
 });
 
 // ================= Credentials Vault (Logins & Passwords) =================
-const credentialsFilePath = path.join(app.getPath('userData'), 'credentials-vault.json');
+const credentialsFilePath = path.join(getStorageDirectory(), 'credentials-vault.json');
 
 const crypto = require('crypto');
 const VAULT_SALT = '4Navigator-idle-vault-salt';
@@ -322,6 +349,98 @@ ipcMain.handle('credentials:delete', (event, id) => {
   const filtered = vault.filter(item => item.id !== id);
   saveCredentialsVault(filtered);
   return true;
+});
+
+// ================= Persistent Notes System (Portable & Installed) =================
+function loadAllNotes() {
+  const primaryPath = notesFilePath;
+  const fallbackPath = path.join(app.getPath('userData'), 'notes-data.json');
+
+  try {
+    if (fs.existsSync(primaryPath)) {
+      const raw = fs.readFileSync(primaryPath, 'utf8');
+      return JSON.parse(raw || '{}');
+    }
+    if (primaryPath !== fallbackPath && fs.existsSync(fallbackPath)) {
+      const raw = fs.readFileSync(fallbackPath, 'utf8');
+      return JSON.parse(raw || '{}');
+    }
+  } catch (err) {
+    console.error('Failed to load notes from disk:', err);
+  }
+
+  return {
+    general: '',
+    p1: '',
+    p2: '',
+    p3: '',
+    p4: '',
+    lastTab: 'general'
+  };
+}
+
+function saveAllNotes(notesObj) {
+  try {
+    const primaryPath = notesFilePath;
+    const dir = path.dirname(primaryPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(primaryPath, JSON.stringify(notesObj, null, 2), 'utf8');
+
+    // Also mirror to userData if running portable for maximum safety
+    const fallbackPath = path.join(app.getPath('userData'), 'notes-data.json');
+    if (primaryPath !== fallbackPath) {
+      try {
+        fs.writeFileSync(fallbackPath, JSON.stringify(notesObj, null, 2), 'utf8');
+      } catch (_) {}
+    }
+    return true;
+  } catch (err) {
+    console.error('Failed to save notes to disk:', err);
+    return false;
+  }
+}
+
+ipcMain.handle('notes:get-all', () => {
+  return loadAllNotes();
+});
+
+ipcMain.handle('notes:save-all', (event, notesObj) => {
+  if (!notesObj || typeof notesObj !== 'object') return false;
+  return saveAllNotes(notesObj);
+});
+
+// Notes Textarea Native Context Menu
+ipcMain.handle('notes:show-context-menu', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (!win) return;
+
+  const menu = Menu.buildFromTemplate([
+    { role: 'undo', label: 'Desfazer' },
+    { role: 'redo', label: 'Refazer' },
+    { type: 'separator' },
+    { role: 'cut', label: 'Recortar' },
+    { role: 'copy', label: 'Copiar' },
+    { role: 'paste', label: 'Colar' },
+    { type: 'separator' },
+    { role: 'selectAll', label: 'Selecionar Tudo' },
+    { type: 'separator' },
+    {
+      label: 'Copiar Todas as Anotações Desta Aba',
+      click: () => {
+        event.sender.send('notes:trigger-copy-all');
+      }
+    },
+    {
+      label: 'Limpar Anotações Desta Aba',
+      click: () => {
+        event.sender.send('notes:trigger-clear');
+      }
+    }
+  ]);
+
+  menu.popup({ window: win });
 });
 
 // Auto-Updater Handlers & Events

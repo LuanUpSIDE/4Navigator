@@ -32,5 +32,20 @@ contextBridge.exposeInMainWorld('navigatorAPI', {
     getForUrl: (url) => ipcRenderer.invoke('credentials:get-for-url', url),
     save: (entry) => ipcRenderer.invoke('credentials:save', entry),
     delete: (id) => ipcRenderer.invoke('credentials:delete', id)
+  },
+  notes: {
+    getAll: () => ipcRenderer.invoke('notes:get-all'),
+    saveAll: (notesObj) => ipcRenderer.invoke('notes:save-all', notesObj),
+    showContextMenu: () => ipcRenderer.invoke('notes:show-context-menu'),
+    onTriggerCopyAll: (callback) => {
+      const handler = () => callback();
+      ipcRenderer.on('notes:trigger-copy-all', handler);
+      return () => ipcRenderer.removeListener('notes:trigger-copy-all', handler);
+    },
+    onTriggerClear: (callback) => {
+      const handler = () => callback();
+      ipcRenderer.on('notes:trigger-clear', handler);
+      return () => ipcRenderer.removeListener('notes:trigger-clear', handler);
+    }
   }
 });

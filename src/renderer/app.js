@@ -733,16 +733,72 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Notes Drawer Logic
+  // ================= Notes Drawer Logic (Persistent on Disk & localStorage) =================
+  let cachedNotes = {
+    general: '',
+    p1: '',
+    p2: '',
+    p3: '',
+    p4: '',
+    lastTab: 'general'
+  };
+  let saveNotesDebounceTimer = null;
+
+  async function initPersistentNotes() {
+    // 1. First load from localStorage for instant display
+    ['general', 'p1', 'p2', 'p3', 'p4'].forEach(tab => {
+      const localVal = localStorage.getItem(`4nav_notes_${tab}`);
+      if (localVal) cachedNotes[tab] = localVal;
+    });
+
+    // 2. Fetch from persistent disk storage (portable 4Navigator-Data or installed userData)
+    if (window.navigatorAPI?.notes?.getAll) {
+      try {
+        const diskNotes = await window.navigatorAPI.notes.getAll();
+        if (diskNotes && typeof diskNotes === 'object') {
+          ['general', 'p1', 'p2', 'p3', 'p4'].forEach(tab => {
+            if (diskNotes[tab] !== undefined && diskNotes[tab] !== null) {
+              cachedNotes[tab] = diskNotes[tab];
+              localStorage.setItem(`4nav_notes_${tab}`, diskNotes[tab]);
+            } else if (cachedNotes[tab]) {
+              diskNotes[tab] = cachedNotes[tab];
+            }
+          });
+          if (diskNotes.lastTab) {
+            currentNoteTab = diskNotes.lastTab;
+          }
+        }
+      } catch (err) {
+        console.error('Error loading notes from disk:', err);
+      }
+    }
+
+    // Activate the saved tab
+    notesTabs.forEach(t => {
+      const isTab = t.getAttribute('data-tab') === currentNoteTab;
+      t.classList.toggle('active', isTab);
+    });
+    loadNote(currentNoteTab);
+  }
+
   function loadNote(tab) {
-    const text = localStorage.getItem(`4nav_notes_${tab}`) || '';
+    const text = cachedNotes[tab] !== undefined ? cachedNotes[tab] : (localStorage.getItem(`4nav_notes_${tab}`) || '');
     notesContent.value = text;
     notesCharCount.textContent = `${text.length} caracteres`;
   }
 
-  function saveCurrentNote() {
+  function queueSaveNotes() {
+    cachedNotes[currentNoteTab] = notesContent.value;
+    cachedNotes.lastTab = currentNoteTab;
     localStorage.setItem(`4nav_notes_${currentNoteTab}`, notesContent.value);
     notesCharCount.textContent = `${notesContent.value.length} caracteres`;
+
+    clearTimeout(saveNotesDebounceTimer);
+    saveNotesDebounceTimer = setTimeout(async () => {
+      if (window.navigatorAPI?.notes?.saveAll) {
+        await window.navigatorAPI.notes.saveAll(cachedNotes);
+      }
+    }, 350);
   }
 
   btnToggleNotes.addEventListener('click', () => {
@@ -756,16 +812,55 @@ document.addEventListener('DOMContentLoaded', () => {
 
   notesTabs.forEach(tabBtn => {
     tabBtn.addEventListener('click', () => {
+      // Save current active tab text before switching
+      cachedNotes[currentNoteTab] = notesContent.value;
+      localStorage.setItem(`4nav_notes_${currentNoteTab}`, notesContent.value);
+
       notesTabs.forEach(t => t.classList.remove('active'));
       tabBtn.classList.add('active');
       currentNoteTab = tabBtn.getAttribute('data-tab');
+      cachedNotes.lastTab = currentNoteTab;
+
       loadNote(currentNoteTab);
+      queueSaveNotes();
     });
   });
 
   notesContent.addEventListener('input', () => {
-    saveCurrentNote();
+    queueSaveNotes();
   });
+
+  // Right-Click Context Menu on Notes Textarea
+  notesContent.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    notesContent.focus();
+    if (window.navigatorAPI?.notes?.showContextMenu) {
+      window.navigatorAPI.notes.showContextMenu();
+    }
+  });
+
+  // Context menu triggered actions
+  if (window.navigatorAPI?.notes?.onTriggerCopyAll) {
+    window.navigatorAPI.notes.onTriggerCopyAll(async () => {
+      if (!notesContent.value) return;
+      try {
+        await navigator.clipboard.writeText(notesContent.value);
+        showToast('📋 Todas as anotações desta aba foram copiadas!');
+      } catch (_) {
+        showToast('❌ Erro ao copiar anotações.');
+      }
+    });
+  }
+
+  if (window.navigatorAPI?.notes?.onTriggerClear) {
+    window.navigatorAPI.notes.onTriggerClear(() => {
+      if (confirm('Deseja realmente limpar as anotações desta aba?')) {
+        notesContent.value = '';
+        queueSaveNotes();
+        showToast('Anotações limpas.');
+      }
+    });
+  }
 
   btnCopyNotes.addEventListener('click', async () => {
     if (!notesContent.value) return;
@@ -780,10 +875,13 @@ document.addEventListener('DOMContentLoaded', () => {
   btnClearNotes.addEventListener('click', () => {
     if (confirm('Deseja limpar as anotações desta aba?')) {
       notesContent.value = '';
-      saveCurrentNote();
+      queueSaveNotes();
       showToast('Anotações limpas.');
     }
   });
+
+  // Initialize persistent notes immediately
+  initPersistentNotes();
 
   // Fullscreen / Window Toggle
   if (btnWinMaximize && window.navigatorAPI) {
@@ -1420,10 +1518,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }, 5000);
 
-  // Auto-save session on close or page hide
+  // Auto-save session and notes on close or page hide
   window.addEventListener('beforeunload', () => {
     const currentUrls = quadrants.map(q => q.webview.getURL() || q.urlInput.value || '');
     localStorage.setItem('4nav_last_session', JSON.stringify(currentUrls));
+
+    if (window.navigatorAPI?.notes?.saveAll) {
+      cachedNotes[currentNoteTab] = notesContent.value;
+      cachedNotes.lastTab = currentNoteTab;
+      window.navigatorAPI.notes.saveAll(cachedNotes);
+    }
   });
 });
 
