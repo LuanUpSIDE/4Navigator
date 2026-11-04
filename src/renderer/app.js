@@ -1781,10 +1781,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const updaterReleaseNotes = document.getElementById('updater-release-notes');
 
   let updaterCurrentState = 'idle'; // idle | checking | available | downloading | downloaded | error
+  let localCurrentVersion = '';
+
+  // Ensure updater badge is hidden by default
+  if (updaterBadgeDot) {
+    updaterBadgeDot.classList.add('hidden');
+    updaterBadgeDot.style.display = 'none';
+  }
 
   // Fetch current version on load
   if (window.navigatorAPI?.updater?.getCurrentVersion) {
     window.navigatorAPI.updater.getCurrentVersion().then(ver => {
+      localCurrentVersion = ver || '';
       if (updaterCurrVersion && ver) updaterCurrVersion.textContent = `v${ver}`;
     }).catch(() => {});
   }
@@ -1899,9 +1907,29 @@ document.addEventListener('DOMContentLoaded', () => {
           btnUpdaterAction.textContent = 'Verificando...';
           break;
 
-        case 'available':
+        case 'available': {
+          const currentClean = (localCurrentVersion || updaterCurrVersion?.textContent || '').replace(/^v/, '').trim();
+          const remoteClean = (data.version || '').replace(/^v/, '').trim();
+
+          // If current version is already equal or newer, do not show badge
+          if (currentClean && remoteClean && currentClean === remoteClean) {
+            updaterCurrentState = 'not-available';
+            if (updaterBadgeDot) {
+              updaterBadgeDot.classList.add('hidden');
+              updaterBadgeDot.style.display = 'none';
+            }
+            updaterTargetVersion?.classList.add('hidden');
+            updaterStatusMessage.textContent = 'O 4Navigator já está na versão mais recente disponível! 🎉';
+            btnUpdaterAction.disabled = false;
+            btnUpdaterAction.textContent = 'Verificar Novamente';
+            break;
+          }
+
           updaterCurrentState = 'available';
-          updaterBadgeDot?.classList.remove('hidden');
+          if (updaterBadgeDot) {
+            updaterBadgeDot.classList.remove('hidden');
+            updaterBadgeDot.style.display = 'block';
+          }
           updaterTargetVersion?.classList.remove('hidden');
           if (updaterNewVersion && data.version) updaterNewVersion.textContent = `v${data.version}`;
 
@@ -1920,10 +1948,14 @@ document.addEventListener('DOMContentLoaded', () => {
           btnUpdaterAction.disabled = false;
           showToast(`🚀 Nova versão v${data.version} disponível!`);
           break;
+        }
 
         case 'not-available':
           updaterCurrentState = 'not-available';
-          updaterBadgeDot?.classList.add('hidden');
+          if (updaterBadgeDot) {
+            updaterBadgeDot.classList.add('hidden');
+            updaterBadgeDot.style.display = 'none';
+          }
           updaterTargetVersion?.classList.add('hidden');
           updaterStatusMessage.textContent = 'O 4Navigator já está na versão mais recente disponível! 🎉';
           btnUpdaterAction.disabled = false;
@@ -1959,6 +1991,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         case 'error':
           updaterCurrentState = 'error';
+          if (updaterBadgeDot) {
+            updaterBadgeDot.classList.add('hidden');
+            updaterBadgeDot.style.display = 'none';
+          }
           updaterStatusMessage.textContent = data.message || 'Falha na verificação de atualização.';
           btnUpdaterAction.disabled = false;
           btnUpdaterAction.textContent = 'Tentar Novamente';

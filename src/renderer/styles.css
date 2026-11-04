@@ -36,6 +36,11 @@
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
+/* Utility Classes */
+.hidden {
+  display: none !important;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -1412,6 +1417,10 @@ body.mini-widget-mode .bookmarks-bar {
   border-radius: 50%;
   box-shadow: 0 0 6px var(--accent-cyan);
   animation: pulseDot 1.5s infinite;
+}
+
+.updater-dot.hidden {
+  display: none !important;
 }
 
 @keyframes pulseDot {

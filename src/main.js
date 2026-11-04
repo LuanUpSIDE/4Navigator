@@ -497,6 +497,19 @@ autoUpdater.on('checking-for-update', () => {
 });
 
 autoUpdater.on('update-available', (info) => {
+  try {
+    const semver = require('semver');
+    const currentVer = app.getVersion();
+    if (info && info.version && !semver.gt(info.version, currentVer)) {
+      console.log(`[AutoUpdater] Versão remota v${info.version} não é mais recente que a atual v${currentVer}. Nenhuma notificação de atualização necessária.`);
+      sendUpdaterStatus('updater:status', {
+        state: 'not-available',
+        version: currentVer
+      });
+      return;
+    }
+  } catch (_) {}
+
   sendUpdaterStatus('updater:status', {
     state: 'available',
     version: info.version,
