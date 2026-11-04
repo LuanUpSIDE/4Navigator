@@ -186,6 +186,7 @@
             <button class="btn-nav btn-reload" title="Recarregar">↻</button>
             
             <div class="url-input-container">
+              <span class="url-shield secure" title="Conexão Criptografada Segura (HTTPS)">🔒</span>
               <input type="text" class="url-input" placeholder="Digite uma URL ou escolha um jogo..." spellcheck="false">
               <button class="btn-go" title="Navegar">➔</button>
             </div>
@@ -231,6 +232,7 @@
             <button class="btn-nav btn-reload" title="Recarregar">↻</button>
             
             <div class="url-input-container">
+              <span class="url-shield secure" title="Conexão Criptografada Segura (HTTPS)">🔒</span>
               <input type="text" class="url-input" placeholder="Digite uma URL ou escolha um jogo..." spellcheck="false">
               <button class="btn-go" title="Navegar">➔</button>
             </div>
@@ -276,6 +278,7 @@
             <button class="btn-nav btn-reload" title="Recarregar">↻</button>
             
             <div class="url-input-container">
+              <span class="url-shield secure" title="Conexão Criptografada Segura (HTTPS)">🔒</span>
               <input type="text" class="url-input" placeholder="Digite uma URL ou escolha um jogo..." spellcheck="false">
               <button class="btn-go" title="Navegar">➔</button>
             </div>
@@ -321,6 +324,7 @@
             <button class="btn-nav btn-reload" title="Recarregar">↻</button>
             
             <div class="url-input-container">
+              <span class="url-shield secure" title="Conexão Criptografada Segura (HTTPS)">🔒</span>
               <input type="text" class="url-input" placeholder="Digite uma URL ou escolha um jogo..." spellcheck="false">
               <button class="btn-go" title="Navegar">➔</button>
             </div>
@@ -541,6 +545,7 @@
         <div class="updater-modal-body">
           <div class="vault-top-actions">
             <input type="text" id="vault-search-input" class="bookmark-input vault-search" placeholder="Buscar por jogo ou usuário...">
+            <button id="btn-vault-security-pin" class="btn btn-secondary text-primary" title="Proteger o cofre com PIN Mestre">🔒 PIN Mestre</button>
             <button id="btn-vault-add-manual" class="btn btn-secondary text-primary">+ Novo Login</button>
           </div>
           <div id="vault-list-container" class="vault-list-container">
@@ -549,6 +554,60 @@
         </div>
         <div class="updater-modal-footer">
           <button id="btn-vault-close" class="btn btn-secondary">Fechar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Master PIN Unlock Modal -->
+    <div id="vault-pin-modal" class="bookmark-modal hidden">
+      <div class="bookmark-modal-card pin-modal-card">
+        <div class="bookmark-modal-header">
+          <h3>🔐 Cofre Protegido por PIN</h3>
+          <button id="btn-close-pin-modal" class="btn-nav">✕</button>
+        </div>
+        <div class="bookmark-modal-body">
+          <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 0;">
+            Digite o PIN Mestre de segurança para acessar e visualizar suas senhas salvas.
+          </p>
+          <div class="form-group" style="margin-top: 8px;">
+            <label>PIN de Acesso (4 a 12 dígitos):</label>
+            <input type="password" id="vault-pin-input" class="bookmark-input pin-input" maxlength="12" placeholder="••••" autocomplete="off">
+          </div>
+          <div id="vault-pin-error" class="pin-error-msg hidden">PIN incorreto. Tente novamente.</div>
+        </div>
+        <div class="bookmark-modal-footer">
+          <button id="btn-cancel-pin-modal" class="btn btn-secondary">Cancelar</button>
+          <button id="btn-submit-pin-modal" class="btn btn-primary">Desbloquear</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Set / Change Master PIN Modal -->
+    <div id="vault-set-pin-modal" class="bookmark-modal hidden">
+      <div class="bookmark-modal-card pin-modal-card">
+        <div class="bookmark-modal-header">
+          <h3 id="set-pin-modal-title">🔒 Configurar PIN Mestre</h3>
+          <button id="btn-close-set-pin-modal" class="btn-nav">✕</button>
+        </div>
+        <div class="bookmark-modal-body">
+          <div id="set-pin-current-group" class="form-group hidden">
+            <label>PIN Atual:</label>
+            <input type="password" id="set-pin-current-input" class="bookmark-input" maxlength="12" placeholder="Seu PIN atual">
+          </div>
+          <div class="form-group">
+            <label id="set-pin-new-label">Novo PIN Mestre (mínimo 4 dígitos):</label>
+            <input type="password" id="set-pin-new-input" class="bookmark-input" maxlength="12" placeholder="Digite o novo PIN">
+          </div>
+          <div class="form-group">
+            <label>Confirmar Novo PIN:</label>
+            <input type="password" id="set-pin-confirm-input" class="bookmark-input" maxlength="12" placeholder="Repita o novo PIN">
+          </div>
+          <div id="set-pin-error" class="pin-error-msg hidden"></div>
+        </div>
+        <div class="bookmark-modal-footer">
+          <button id="btn-remove-pin" class="btn btn-secondary text-danger hidden" style="margin-right: auto;">Remover PIN</button>
+          <button id="btn-cancel-set-pin" class="btn btn-secondary">Cancelar</button>
+          <button id="btn-save-set-pin" class="btn btn-primary">Salvar PIN</button>
         </div>
       </div>
     </div>

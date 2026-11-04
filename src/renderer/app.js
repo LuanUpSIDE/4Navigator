@@ -26,6 +26,25 @@ document.addEventListener('DOMContentLoaded', () => {
   let isGlobalMuted = false;
   let lastFocusedQuadId = 1;
 
+  // Feature 4: Security Shield & Protocol Indicator
+  function updateQuadrantSecurityShield(quad, url) {
+    if (!quad || !quad.urlShield) return;
+    const rawUrl = (url || '').trim().toLowerCase();
+    if (rawUrl.startsWith('https://')) {
+      quad.urlShield.textContent = '🔒';
+      quad.urlShield.className = 'url-shield secure';
+      quad.urlShield.title = 'Conexão Segura e Criptografada (HTTPS - SSL/TLS)';
+    } else if (rawUrl.startsWith('http://')) {
+      quad.urlShield.textContent = '⚠️';
+      quad.urlShield.className = 'url-shield insecure';
+      quad.urlShield.title = 'Atenção: Conexão NÃO criptografada (HTTP)! Não insira senhas nesta página.';
+    } else {
+      quad.urlShield.textContent = '🌐';
+      quad.urlShield.className = 'url-shield neutral';
+      quad.urlShield.title = 'Página local ou endereço padrão';
+    }
+  }
+
   // Initialize Quadrants 1 through 4
   for (let id = 1; id <= 4; id++) {
     const el = document.getElementById(`quadrant-${id}`);
@@ -33,6 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const webview = el.querySelector('.game-webview');
     const urlInput = el.querySelector('.url-input');
+    const urlShield = el.querySelector('.url-shield');
     const btnGo = el.querySelector('.btn-go');
     const btnBack = el.querySelector('.btn-back');
     const btnForward = el.querySelector('.btn-forward');
@@ -70,6 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
       el,
       webview,
       urlInput,
+      urlShield,
       btnMute,
       btnBookmark,
       btnCredentials,
@@ -82,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         urlInput.value = finalUrl;
         webview.src = finalUrl;
+        updateQuadrantSecurityShield(this, finalUrl);
         if (emptyState) emptyState.classList.add('hidden');
       },
       setMuted(muted) {
@@ -139,6 +161,24 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
 
+    // Shield status information click
+    if (urlShield) {
+      urlShield.addEventListener('click', () => {
+        const currentUrl = (webview.getURL() || urlInput.value || '').trim();
+        if (!currentUrl || currentUrl === 'about:blank') {
+          showToast(`Painel ${id}: Nenhuma página aberta.`);
+          return;
+        }
+        if (currentUrl.startsWith('https://')) {
+          showToast(`🔒 Painel ${id}: Conexão Segura com Criptografia SSL/TLS (HTTPS).`);
+        } else if (currentUrl.startsWith('http://')) {
+          showToast(`⚠️ Painel ${id}: ATENÇÃO! Conexão NÃO segura (HTTP sem criptografia). Não envie senhas!`);
+        } else {
+          showToast(`🌐 Painel ${id}: Página local ou interna.`);
+        }
+      });
+    }
+
     // Navigation Input Actions
     btnGo.addEventListener('click', () => quad.navigateTo(urlInput.value));
     urlInput.addEventListener('keydown', (e) => {
@@ -166,9 +206,11 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Credentials Action for this quadrant
+    // Credentials Action for this quadrant (protected by Master PIN if configured)
     if (btnCredentials) {
-      btnCredentials.addEventListener('click', () => {
+      btnCredentials.addEventListener('click', async () => {
+        const unlocked = await ensureVaultUnlocked();
+        if (!unlocked) return;
         openQuickCredentialsModal(quad);
       });
     }
@@ -223,6 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadingBar.style.opacity = '1';
         loadingBar.style.width = '70%';
       }
+      updateQuadrantSecurityShield(quad, webview.getURL());
     });
 
     webview.addEventListener('did-stop-loading', () => {
@@ -238,6 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (emptyState) emptyState.classList.add('hidden');
         updateBookmarkButtons();
         updateCredentialButtons();
+        updateQuadrantSecurityShield(quad, webview.getURL());
       }
     });
 
@@ -247,6 +291,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (emptyState) emptyState.classList.add('hidden');
         updateBookmarkButtons();
         updateCredentialButtons();
+        updateQuadrantSecurityShield(quad, event.url);
+      }
+    });
+
+    // Feature 4: Navigation Guard - Monitor redirects and protocol changes
+    webview.addEventListener('will-navigate', (event) => {
+      updateQuadrantSecurityShield(quad, event.url);
+    });
+
+    // Intercept popups into the quadrant sandbox
+    webview.addEventListener('new-window', (e) => {
+      e.preventDefault();
+      if (e.url) {
+        quad.navigateTo(e.url);
       }
     });
 
@@ -979,6 +1037,121 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnVaultAddManual = document.getElementById('btn-vault-add-manual');
   const vaultListContainer = document.getElementById('vault-list-container');
 
+  // DOM Elements - Master PIN & Vault Security Modals (Feature 2)
+  const btnVaultSecurityPin = document.getElementById('btn-vault-security-pin');
+  const vaultPinModal = document.getElementById('vault-pin-modal');
+  const btnClosePinModal = document.getElementById('btn-close-pin-modal');
+  const btnCancelPinModal = document.getElementById('btn-cancel-pin-modal');
+  const btnSubmitPinModal = document.getElementById('btn-submit-pin-modal');
+  const vaultPinInput = document.getElementById('vault-pin-input');
+  const vaultPinError = document.getElementById('vault-pin-error');
+
+  const vaultSetPinModal = document.getElementById('vault-set-pin-modal');
+  const setPinModalTitle = document.getElementById('set-pin-modal-title');
+  const btnCloseSetPinModal = document.getElementById('btn-close-set-pin-modal');
+  const setPinCurrentGroup = document.getElementById('set-pin-current-group');
+  const setPinCurrentInput = document.getElementById('set-pin-current-input');
+  const setPinNewInput = document.getElementById('set-pin-new-input');
+  const setPinConfirmInput = document.getElementById('set-pin-confirm-input');
+  const setPinError = document.getElementById('set-pin-error');
+  const btnRemovePin = document.getElementById('btn-remove-pin');
+  const btnCancelSetPin = document.getElementById('btn-cancel-set-pin');
+  const btnSaveSetPin = document.getElementById('btn-save-set-pin');
+
+  let isVaultUnlocked = false;
+  let vaultInactivityTimer = null;
+  let pendingUnlockResolver = null;
+  const VAULT_INACTIVITY_LIMIT = 5 * 60 * 1000; // 5 minutes auto-lock
+
+  function resetVaultInactivityTimer() {
+    if (vaultInactivityTimer) clearTimeout(vaultInactivityTimer);
+    if (!isVaultUnlocked) return;
+    vaultInactivityTimer = setTimeout(() => {
+      isVaultUnlocked = false;
+      if (vaultModal && !vaultModal.classList.contains('hidden')) {
+        vaultModal.classList.add('hidden');
+        showToast('🔒 Cofre de senhas bloqueado automaticamente por inatividade.');
+      }
+    }, VAULT_INACTIVITY_LIMIT);
+  }
+
+  // Activity in vault modal resets inactivity countdown
+  vaultModal?.addEventListener('mousemove', resetVaultInactivityTimer);
+  vaultModal?.addEventListener('keydown', resetVaultInactivityTimer);
+
+  async function ensureVaultUnlocked() {
+    if (!window.navigatorAPI?.vaultSecurity?.hasMasterPin) return true;
+    try {
+      const hasPin = await window.navigatorAPI.vaultSecurity.hasMasterPin();
+      if (!hasPin) return true;
+      if (isVaultUnlocked) {
+        resetVaultInactivityTimer();
+        return true;
+      }
+
+      return new Promise((resolve) => {
+        pendingUnlockResolver = resolve;
+        if (vaultPinInput) vaultPinInput.value = '';
+        if (vaultPinError) vaultPinError.classList.add('hidden');
+        if (vaultPinModal) vaultPinModal.classList.remove('hidden');
+        setTimeout(() => vaultPinInput?.focus(), 100);
+      });
+    } catch (_) {
+      return true;
+    }
+  }
+
+  function closeUnlockPinModal(success = false) {
+    if (vaultPinModal) vaultPinModal.classList.add('hidden');
+    if (pendingUnlockResolver) {
+      pendingUnlockResolver(success);
+      pendingUnlockResolver = null;
+    }
+  }
+
+  btnClosePinModal?.addEventListener('click', () => closeUnlockPinModal(false));
+  btnCancelPinModal?.addEventListener('click', () => closeUnlockPinModal(false));
+
+  async function handleUnlockSubmit() {
+    const pin = (vaultPinInput?.value || '').trim();
+    if (!pin) {
+      if (vaultPinError) {
+        vaultPinError.textContent = 'Por favor, digite o PIN de acesso.';
+        vaultPinError.classList.remove('hidden');
+      }
+      return;
+    }
+
+    try {
+      const res = await window.navigatorAPI.vaultSecurity.verifyMasterPin(pin);
+      if (res && res.success) {
+        isVaultUnlocked = true;
+        resetVaultInactivityTimer();
+        closeUnlockPinModal(true);
+        showToast('🔓 Cofre de senhas desbloqueado com sucesso!');
+      } else {
+        if (vaultPinError) {
+          vaultPinError.textContent = res?.error || 'PIN incorreto. Tente novamente.';
+          vaultPinError.classList.remove('hidden');
+        }
+        if (vaultPinInput) {
+          vaultPinInput.value = '';
+          vaultPinInput.focus();
+        }
+      }
+    } catch (err) {
+      if (vaultPinError) {
+        vaultPinError.textContent = 'Erro ao verificar PIN: ' + err.message;
+        vaultPinError.classList.remove('hidden');
+      }
+    }
+  }
+
+  btnSubmitPinModal?.addEventListener('click', handleUnlockSubmit);
+  vaultPinInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleUnlockSubmit();
+  });
+
   // Helper to extract clean domain from URL
   function extractDomain(url) {
     if (!url || url === 'about:blank') return '';
@@ -1270,10 +1443,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }[s]));
   }
 
-  // Open Vault Modal from Options dropdown
+  // Open Vault Modal from Options dropdown (protected by Master PIN if configured)
   if (btnOpenVaultModal) {
     btnOpenVaultModal.addEventListener('click', async () => {
       if (optionsMenu) optionsMenu.classList.add('hidden');
+      const unlocked = await ensureVaultUnlocked();
+      if (!unlocked) return;
       if (vaultModal) vaultModal.classList.remove('hidden');
       if (vaultSearchInput) vaultSearchInput.value = '';
       await loadVaultList();
@@ -1302,6 +1477,131 @@ document.addEventListener('DOMContentLoaded', () => {
       credDomainInput.focus();
     }
   });
+
+  // Master PIN Configuration & Management (Feature 2)
+  if (btnVaultSecurityPin) {
+    btnVaultSecurityPin.addEventListener('click', async () => {
+      try {
+        const hasPin = await window.navigatorAPI.vaultSecurity.hasMasterPin();
+        if (setPinModalTitle) {
+          setPinModalTitle.textContent = hasPin ? '🔒 Alterar PIN Mestre' : '🔒 Ativar PIN Mestre';
+        }
+        if (setPinCurrentGroup) {
+          if (hasPin) setPinCurrentGroup.classList.remove('hidden');
+          else setPinCurrentGroup.classList.add('hidden');
+        }
+        if (btnRemovePin) {
+          if (hasPin) btnRemovePin.classList.remove('hidden');
+          else btnRemovePin.classList.add('hidden');
+        }
+        if (btnSaveSetPin) {
+          btnSaveSetPin.textContent = hasPin ? 'Atualizar PIN' : 'Ativar PIN';
+        }
+        if (setPinCurrentInput) setPinCurrentInput.value = '';
+        if (setPinNewInput) setPinNewInput.value = '';
+        if (setPinConfirmInput) setPinConfirmInput.value = '';
+        if (setPinError) setPinError.classList.add('hidden');
+        if (vaultSetPinModal) vaultSetPinModal.classList.remove('hidden');
+        setTimeout(() => {
+          if (hasPin) setPinCurrentInput?.focus();
+          else setPinNewInput?.focus();
+        }, 100);
+      } catch (err) {
+        showToast('Erro ao carregar status do PIN: ' + err.message);
+      }
+    });
+  }
+
+  btnCloseSetPinModal?.addEventListener('click', () => vaultSetPinModal?.classList.add('hidden'));
+  btnCancelSetPin?.addEventListener('click', () => vaultSetPinModal?.classList.add('hidden'));
+
+  btnSaveSetPin?.addEventListener('click', async () => {
+    const hasPin = await window.navigatorAPI.vaultSecurity.hasMasterPin();
+    const curr = (setPinCurrentInput?.value || '').trim();
+    const next = (setPinNewInput?.value || '').trim();
+    const conf = (setPinConfirmInput?.value || '').trim();
+
+    if (hasPin && !curr) {
+      if (setPinError) {
+        setPinError.textContent = 'Digite o seu PIN atual para prosseguir.';
+        setPinError.classList.remove('hidden');
+      }
+      return;
+    }
+    if (next.length < 4 || next.length > 12) {
+      if (setPinError) {
+        setPinError.textContent = 'O novo PIN deve ter entre 4 e 12 caracteres/dígitos.';
+        setPinError.classList.remove('hidden');
+      }
+      return;
+    }
+    if (next !== conf) {
+      if (setPinError) {
+        setPinError.textContent = 'A confirmação do novo PIN não confere.';
+        setPinError.classList.remove('hidden');
+      }
+      return;
+    }
+
+    try {
+      const res = await window.navigatorAPI.vaultSecurity.setMasterPin({ currentPin: curr, newPin: next });
+      if (res && res.success) {
+        isVaultUnlocked = true;
+        resetVaultInactivityTimer();
+        vaultSetPinModal.classList.add('hidden');
+        showToast('✅ PIN Mestre configurado com sucesso!');
+      } else {
+        if (setPinError) {
+          setPinError.textContent = res?.error || 'Erro ao definir PIN Mestre.';
+          setPinError.classList.remove('hidden');
+        }
+      }
+    } catch (err) {
+      if (setPinError) {
+        setPinError.textContent = 'Falha: ' + err.message;
+        setPinError.classList.remove('hidden');
+      }
+    }
+  });
+
+  btnRemovePin?.addEventListener('click', async () => {
+    const curr = (setPinCurrentInput?.value || '').trim();
+    if (!curr) {
+      if (setPinError) {
+        setPinError.textContent = 'Digite o seu PIN atual no campo acima para remover a proteção.';
+        setPinError.classList.remove('hidden');
+      }
+      setPinCurrentInput?.focus();
+      return;
+    }
+
+    try {
+      const res = await window.navigatorAPI.vaultSecurity.removeMasterPin(curr);
+      if (res && res.success) {
+        isVaultUnlocked = false;
+        vaultSetPinModal.classList.add('hidden');
+        showToast('🔓 Proteção por PIN Mestre removida.');
+      } else {
+        if (setPinError) {
+          setPinError.textContent = res?.error || 'PIN incorreto. Não foi possível remover.';
+          setPinError.classList.remove('hidden');
+        }
+      }
+    } catch (err) {
+      if (setPinError) {
+        setPinError.textContent = 'Falha: ' + err.message;
+        setPinError.classList.remove('hidden');
+      }
+    }
+  });
+
+  // Feature 5: Download Guard - Intercept dangerous executable files
+  if (window.navigatorAPI?.security?.onDownloadBlocked) {
+    window.navigatorAPI.security.onDownloadBlocked((data) => {
+      const filename = data?.filename || 'arquivo executável';
+      showToast(`🛡️ Download Bloqueado: "${filename}" é um executável de alto risco proibido por segurança.`, 6000);
+    });
+  }
 
   // Initial check of credential indicators
   setTimeout(updateCredentialButtons, 1500);

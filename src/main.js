@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell, Menu, clipboard } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, Menu, clipboard, session } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { autoUpdater } = require('electron-updater');
@@ -647,7 +647,163 @@ app.on('web-contents-created', (event, contents) => {
   });
 });
 
+// ================= Advanced Security Suite (Features 1, 2, 3, 4, 5) =================
+// 1. Known Cryptojacking and Malicious Miner Patterns
+const CRYPTO_MINER_DOMAINS = [
+  'coinhive.com',
+  'coin-hive.com',
+  'crypto-loot.com',
+  'cryptoloot.pro',
+  'webminepool.com',
+  'jsecoin.com',
+  'minr.pw',
+  'coin-have.com',
+  'monerominer.rocks',
+  'authedmine.com',
+  '2giga.link',
+  'papoto.com',
+  'npcdn.net',
+  'mataharirama.xyz',
+  'listat.biz',
+  'lmodr.biz',
+  'minexmr.com',
+  'webassembly.stream'
+];
+
+// 5. Dangerous executable file extensions to block from automated downloading
+const BLOCKED_DOWNLOAD_EXTENSIONS = [
+  '.exe', '.bat', '.cmd', '.vbs', '.vbe', '.js', '.jse', '.wsf', '.wsh',
+  '.msi', '.scr', '.pif', '.com', '.gadget', '.ps1', '.iso'
+];
+
+function setupSecurityForSession(ses) {
+  if (!ses) return;
+
+  // 1. Anti-Cryptojacking & Miner Request Blocking
+  ses.webRequest.onBeforeRequest({ urls: ['*://*/*'] }, (details, callback) => {
+    const url = details.url.toLowerCase();
+    const isMiner = CRYPTO_MINER_DOMAINS.some(domain => url.includes(domain));
+    if (isMiner) {
+      console.warn(`[Security Guard] Bloqueada requisição para minerador de cripto: ${details.url}`);
+      return callback({ cancel: true });
+    }
+    callback({ cancel: false });
+  });
+
+  // 3. Strict Device Permission Sandboxing (Webcam, Mic, Geo, Sensors, etc.)
+  ses.setPermissionRequestHandler((webContents, permission, callback) => {
+    // Idle games NEVER require media devices, sensors or geolocation
+    const blockedPermissions = [
+      'media', 'camera', 'microphone', 'geolocation', 'notifications',
+      'midi', 'midiSysex', 'pointerLock', 'openExternal', 'clipboard-sanitized-write',
+      'sensors', 'accessibility-events', 'clipboard-read', 'payment-handler',
+      'background-sync', 'ambient-light-sensor', 'accelerometer', 'gyroscope',
+      'magnetometer', 'display-capture', 'window-management', 'local-fonts'
+    ];
+    if (blockedPermissions.includes(permission)) {
+      return callback(false); // Silently deny for zero annoyance and maximum security
+    }
+    callback(false);
+  });
+
+  ses.setPermissionCheckHandler(() => false);
+
+  // 5. Automatic Dangerous File Download Protection
+  ses.on('will-download', (event, item) => {
+    const filename = (item.getFilename() || '').toLowerCase();
+    const isDangerous = BLOCKED_DOWNLOAD_EXTENSIONS.some(ext => filename.endsWith(ext));
+
+    if (isDangerous) {
+      event.preventDefault(); // Block download!
+      console.warn(`[Security Guard] Download de executável perigoso cancelado: ${filename}`);
+
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send('security:download-blocked', {
+          filename: item.getFilename(),
+          url: item.getURL()
+        });
+      }
+    }
+  });
+}
+
+// 2. Master PIN Security for Vault
+const securityConfigPath = path.join(getStorageDirectory(), 'vault-security.json');
+
+function loadSecurityConfig() {
+  try {
+    if (fs.existsSync(securityConfigPath)) {
+      const content = fs.readFileSync(securityConfigPath, 'utf8');
+      return JSON.parse(content || '{}');
+    }
+  } catch (_) {}
+  return { hasPin: false, pinHash: '', salt: '' };
+}
+
+function saveSecurityConfig(cfg) {
+  try {
+    fs.writeFileSync(securityConfigPath, JSON.stringify(cfg, null, 2), 'utf8');
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function hashPin(pin, salt) {
+  return crypto.pbkdf2Sync(String(pin), salt, 10000, 32, 'sha256').toString('hex');
+}
+
+ipcMain.handle('vault:has-master-pin', () => {
+  const cfg = loadSecurityConfig();
+  return Boolean(cfg.hasPin && cfg.pinHash);
+});
+
+ipcMain.handle('vault:set-master-pin', (event, { pin, currentPin }) => {
+  const cfg = loadSecurityConfig();
+  if (cfg.hasPin) {
+    const testHash = hashPin(currentPin || '', cfg.salt);
+    if (testHash !== cfg.pinHash) {
+      return { success: false, error: 'PIN atual incorreto' };
+    }
+  }
+
+  if (!pin || String(pin).trim().length < 4) {
+    return { success: false, error: 'O PIN deve ter pelo menos 4 dígitos' };
+  }
+
+  const salt = crypto.randomBytes(16).toString('hex');
+  const pinHash = hashPin(pin, salt);
+  saveSecurityConfig({ hasPin: true, pinHash, salt, updatedAt: new Date().toISOString() });
+  return { success: true };
+});
+
+ipcMain.handle('vault:verify-master-pin', (event, pin) => {
+  const cfg = loadSecurityConfig();
+  if (!cfg.hasPin) return { success: true, required: false };
+  const testHash = hashPin(pin || '', cfg.salt);
+  const isValid = testHash === cfg.pinHash;
+  return { success: isValid, required: true };
+});
+
+ipcMain.handle('vault:remove-master-pin', (event, currentPin) => {
+  const cfg = loadSecurityConfig();
+  if (!cfg.hasPin) return { success: true };
+  const testHash = hashPin(currentPin || '', cfg.salt);
+  if (testHash !== cfg.pinHash) {
+    return { success: false, error: 'PIN incorreto' };
+  }
+  saveSecurityConfig({ hasPin: false, pinHash: '', salt: '' });
+  return { success: true };
+});
+
 app.whenReady().then(() => {
+  // Apply security hardening to default session and to each persistent slot partition
+  setupSecurityForSession(session.defaultSession);
+  for (let i = 1; i <= 4; i++) {
+    const slotSession = session.fromPartition(`persist:slot${i}`);
+    setupSecurityForSession(slotSession);
+  }
+
   createWindow();
 
   app.on('activate', () => {

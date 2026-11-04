@@ -11,7 +11,13 @@ Um navegador desktop construído em **Electron** projetado especialmente para en
   - **💾 Gerenciador de Backup & Restauração:** Exportação e restauração de saves em formato `.json`.
   - **⚡ Limitador de FPS Interativo:** Botões pill para alternar entre 60 FPS (Padrão), 30 FPS (Eco) e 15 FPS (Ultra-Eco).
   - **🖥️ Aceleração de Hardware por GPU (Opcional - Padrão Ligada):** Interruptor toggle para ativar ou desativar a aceleração gráfica por hardware da GPU, com persistência e reinicialização rápida.
-  - **🔐 Cofre de Logins & Senhas Salvas (Criptografia AES-256):** Gerencie todas as suas contas, credenciais e logins de jogos em um painel seguro centralizado, com cópia rápida para a área de transferência e busca inteligente.
+  - **🔐 Cofre de Logins & Senhas Salvas (Criptografia AES-256 + PIN Mestre PBKDF2):** Gerencie todas as suas contas, credenciais e logins de jogos em um painel seguro centralizado, protegido opcionalmente por PIN Mestre (hash SHA-256 + Salt PBKDF2 com 100.000 iterações), bloqueio automático por inatividade (5 minutos), cópia rápida e busca inteligente.
+- **🛡️ Suite Completa de Segurança e Proteção do Usuário:**
+  - **1. Proteção de Hardware & Anti-Cryptojacking:** Bloqueio nativo no nível de rede (`webRequest.onBeforeRequest`) contra scripts de mineração oculta de criptomoedas (Coinhive, Crypto-loot, Webminepool, Coinimp, Minr, etc.), preservando sua CPU/GPU 100% para os jogos.
+  - **2. Cofre com PIN Mestre & Auto-Lock:** Camada extra de segurança por senha/PIN no cofre de credenciais para impedir acesso não autorizado ao deixar o computador ligado.
+  - **3. Sandboxing Rigoroso de Dispositivos e Sensores:** Bloqueio e negação preventiva de permissões arriscadas de hardware (câmera, microfone, geolocalização, notificações, sensores corporais, dispositivos USB/Bluetooth e sintetizadores MIDI) em todas as partições.
+  - **4. Navigation Guard & Escudo de Protocolo (HTTPS/HTTP):** Indicador visual luminoso de segurança em cada barra de URL (`🔒` verde para HTTPS criptografado com SSL/TLS e `⚠️` vermelho pulsante de alerta para sites sem criptografia HTTP), com contenção de pop-ups (`new-window`) dentro da grade do quadrante.
+  - **5. Download Guard contra Executáveis Perigosos:** Interceptação automática em tempo real no processo principal de downloads suspeitos com cancelamento imediato de arquivos maliciosos (`.exe`, `.bat`, `.cmd`, `.msi`, `.vbs`, `.ps1`, `.scr`) e notificação toast em tela.
 - **🔑 Salvar Login e Preenchimento Automático por Quadrante:**
   - Botão de chave (`🔑`) na barra de ferramentas de cada quadrante com indicação luminosa quando o jogo possui credencial salva.
   - Modal rápido para salvar usuário e senha para o domínio do jogo atual.

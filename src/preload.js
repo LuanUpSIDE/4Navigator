@@ -47,5 +47,18 @@ contextBridge.exposeInMainWorld('navigatorAPI', {
       ipcRenderer.on('notes:trigger-clear', handler);
       return () => ipcRenderer.removeListener('notes:trigger-clear', handler);
     }
+  },
+  security: {
+    onDownloadBlocked: (callback) => {
+      const handler = (event, data) => callback(data);
+      ipcRenderer.on('security:download-blocked', handler);
+      return () => ipcRenderer.removeListener('security:download-blocked', handler);
+    }
+  },
+  vaultSecurity: {
+    hasMasterPin: () => ipcRenderer.invoke('vault:has-master-pin'),
+    setMasterPin: (data) => ipcRenderer.invoke('vault:set-master-pin', data),
+    verifyMasterPin: (pin) => ipcRenderer.invoke('vault:verify-master-pin', pin),
+    removeMasterPin: (currentPin) => ipcRenderer.invoke('vault:remove-master-pin', currentPin)
   }
 });
