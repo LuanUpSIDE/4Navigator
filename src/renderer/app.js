@@ -1603,6 +1603,162 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ================= Anti-Cryptojacking & Miner Protection Logic =================
+  const minerModal = document.getElementById('miner-history-modal');
+  const btnOpenMinerModal = document.getElementById('btn-open-miner-modal');
+  const btnCloseMinerModal = document.getElementById('btn-close-miner-modal');
+  const btnMinerModalClose = document.getElementById('btn-miner-modal-close');
+  const minerLogsContainer = document.getElementById('miner-logs-container');
+  const minerTotalCount = document.getElementById('miner-total-count');
+  const optionsMinerBadge = document.getElementById('options-miner-badge');
+  const btnClearMinerLogs = document.getElementById('btn-clear-miner-logs');
+  const btnSimulateMiner = document.getElementById('btn-simulate-miner');
+
+  function openMinerModal() {
+    closeAllDropdowns();
+    if (minerModal) {
+      minerModal.classList.remove('hidden');
+      loadMinerStatus();
+    }
+  }
+
+  function closeMinerModal() {
+    if (minerModal) {
+      minerModal.classList.add('hidden');
+    }
+  }
+
+  function renderMinerLogs(logs) {
+    if (!minerLogsContainer) return;
+    const count = (logs && Array.isArray(logs)) ? logs.length : 0;
+
+    if (minerTotalCount) {
+      minerTotalCount.textContent = count;
+    }
+
+    if (optionsMinerBadge) {
+      if (count > 0) {
+        optionsMinerBadge.textContent = count;
+        optionsMinerBadge.classList.remove('hidden');
+      } else {
+        optionsMinerBadge.classList.add('hidden');
+      }
+    }
+
+    if (!logs || logs.length === 0) {
+      minerLogsContainer.innerHTML = `
+        <div class="miner-empty-state">
+          <div class="miner-empty-icon">🛡️✨</div>
+          <strong>Nenhuma tentativa de mineração detectada!</strong>
+          <p>Seus 4 quadrantes estão monitorados em tempo real. Se algum site tentar rodar scripts de cryptojacking (Coinhive, CryptoLoot, Monero), o bloqueio ocorrerá imediatamente e o alerta será registrado aqui.</p>
+        </div>
+      `;
+      return;
+    }
+
+    minerLogsContainer.innerHTML = logs.map(item => {
+      const slotNum = item.slot || 1;
+      return `
+        <div class="miner-log-card">
+          <div class="miner-log-top">
+            <div class="miner-log-meta">
+              <span class="slot-badge slot-${slotNum}">${escapeHtml(item.slotLabel || 'Painel ' + slotNum)}</span>
+              <span class="miner-log-origin">${escapeHtml(item.siteOrigin || 'Site')}</span>
+              <span class="miner-threat-badge">${escapeHtml(item.threatName || 'Cryptominer')}</span>
+            </div>
+            <span class="miner-log-time">${escapeHtml(item.dateFormatted || '')} às ${escapeHtml(item.timeFormatted || '')}</span>
+          </div>
+          <div class="miner-log-url" title="${escapeHtml(item.blockedUrl || '')}">
+            <span class="url-label">Script Bloqueado:</span>
+            <code>${escapeHtml(item.blockedUrl || '')}</code>
+          </div>
+          <div class="miner-log-action">
+            <span class="badge-blocked">🛡️ Requisição Neutralizada na Rede</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function loadMinerStatus() {
+    if (!window.navigatorAPI?.security?.getMinerLogs) return;
+    try {
+      const res = await window.navigatorAPI.security.getMinerLogs();
+      if (res && res.logs) {
+        renderMinerLogs(res.logs);
+      }
+    } catch (err) {
+      console.error('Failed to load miner status:', err);
+    }
+  }
+
+  // Intercept real-time miner blocked event
+  if (window.navigatorAPI?.security?.onMinerBlocked) {
+    window.navigatorAPI.security.onMinerBlocked((data) => {
+      const panelLabel = data?.slotLabel || (data?.slot ? `Painel ${data.slot}` : 'Navegador');
+      const threatName = data?.threatName || 'Cryptojacking';
+      showToast(`🛡️ ALERTA DE MINERAÇÃO: Tentativa de cryptojacking bloqueada no ${panelLabel}! (${threatName})`, 7000);
+
+      // Trigger visual alert button in quadrant toolbar if slot is available
+      if (data?.slot) {
+        const quadElement = document.getElementById(`quadrant-${data.slot}`);
+        if (quadElement) {
+          const alertBtn = quadElement.querySelector('.btn-miner-alert');
+          if (alertBtn) {
+            alertBtn.classList.remove('hidden');
+          }
+        }
+      }
+
+      loadMinerStatus();
+    });
+  }
+
+  // Modal triggers
+  btnOpenMinerModal?.addEventListener('click', openMinerModal);
+  btnCloseMinerModal?.addEventListener('click', closeMinerModal);
+  btnMinerModalClose?.addEventListener('click', closeMinerModal);
+
+  // Quadrant alert button clicks
+  document.querySelectorAll('.btn-miner-alert').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openMinerModal();
+    });
+  });
+
+  // Clear logs button
+  btnClearMinerLogs?.addEventListener('click', async () => {
+    if (!window.navigatorAPI?.security?.clearMinerLogs) return;
+    try {
+      await window.navigatorAPI.security.clearMinerLogs();
+      document.querySelectorAll('.btn-miner-alert').forEach(btn => btn.classList.add('hidden'));
+      renderMinerLogs([]);
+      showToast('🧹 Histórico de tentativas de mineração limpo com sucesso.');
+    } catch (err) {
+      showToast('Erro ao limpar histórico: ' + err.message);
+    }
+  });
+
+  // Simulate miner detection for testing
+  btnSimulateMiner?.addEventListener('click', async () => {
+    if (!window.navigatorAPI?.security?.simulateMinerDetection) return;
+    try {
+      const targetSlot = lastFocusedQuadId || 1;
+      await window.navigatorAPI.security.simulateMinerDetection({ slot: targetSlot });
+    } catch (err) {
+      showToast('Erro ao simular detecção: ' + err.message);
+    }
+  });
+
+  // Close miner modal on background click
+  minerModal?.addEventListener('click', (e) => {
+    if (e.target === minerModal) closeMinerModal();
+  });
+
+  // Initial load of miner status to populate badge
+  setTimeout(loadMinerStatus, 1200);
+
   // Initial check of credential indicators
   setTimeout(updateCredentialButtons, 1500);
 
@@ -1832,7 +1988,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Toast Helper
-function showToast(message) {
+function showToast(message, duration = 3000) {
   const container = document.getElementById('toast-container');
   if (!container) return;
 
@@ -1846,5 +2002,5 @@ function showToast(message) {
     toast.style.opacity = '0';
     toast.style.transition = 'opacity 0.3s ease';
     setTimeout(() => toast.remove(), 300);
-  }, 3000);
+  }, duration);
 }

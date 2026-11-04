@@ -118,6 +118,19 @@
                 <span>🔐</span> <strong>Gerenciar Contas & Senhas Salvas</strong>
               </button>
             </div>
+
+            <div class="dropdown-divider"></div>
+
+            <!-- Section 6: Proteção Anti-Cryptojacking & Mineração -->
+            <div class="dropdown-section-title">
+              <span>🛡️ Proteção Anti-Mineração</span>
+            </div>
+            <div class="options-miner-container">
+              <button id="btn-open-miner-modal" class="dropdown-item text-warning" title="Verificar histórico e status da proteção anti-cryptojacking">
+                <span>🛡️</span> <strong>Monitor Anti-Mineração</strong>
+                <span id="options-miner-badge" class="miner-count-badge hidden">0</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -192,6 +205,7 @@
             </div>
 
             <div class="quadrant-actions">
+              <button class="btn-action btn-miner-alert hidden" title="Ameaça de Mineração Bloqueada neste painel! Clique para verificar detalhes">🛡️⚠️</button>
               <button class="btn-action btn-autoclick" title="Auto-Clicker (Clique para Ligar/Desligar)">🎯</button>
               <span class="autoclick-badge hidden">20 CPS</span>
               <button class="btn-action btn-credentials" title="Logins & Senhas Salvas deste Jogo">🔑</button>
@@ -238,6 +252,7 @@
             </div>
 
             <div class="quadrant-actions">
+              <button class="btn-action btn-miner-alert hidden" title="Ameaça de Mineração Bloqueada neste painel! Clique para verificar detalhes">🛡️⚠️</button>
               <button class="btn-action btn-autoclick" title="Auto-Clicker (Clique para Ligar/Desligar)">🎯</button>
               <span class="autoclick-badge hidden">20 CPS</span>
               <button class="btn-action btn-credentials" title="Logins & Senhas Salvas deste Jogo">🔑</button>
@@ -284,6 +299,7 @@
             </div>
 
             <div class="quadrant-actions">
+              <button class="btn-action btn-miner-alert hidden" title="Ameaça de Mineração Bloqueada neste painel! Clique para verificar detalhes">🛡️⚠️</button>
               <button class="btn-action btn-autoclick" title="Auto-Clicker (Clique para Ligar/Desligar)">🎯</button>
               <span class="autoclick-badge hidden">20 CPS</span>
               <button class="btn-action btn-credentials" title="Logins & Senhas Salvas deste Jogo">🔑</button>
@@ -330,6 +346,7 @@
             </div>
 
             <div class="quadrant-actions">
+              <button class="btn-action btn-miner-alert hidden" title="Ameaça de Mineração Bloqueada neste painel! Clique para verificar detalhes">🛡️⚠️</button>
               <button class="btn-action btn-autoclick" title="Auto-Clicker (Clique para Ligar/Desligar)">🎯</button>
               <span class="autoclick-badge hidden">20 CPS</span>
               <button class="btn-action btn-credentials" title="Logins & Senhas Salvas deste Jogo">🔑</button>
@@ -611,6 +628,61 @@
         </div>
       </div>
     </div>
+    <!-- Miner History & Protection Modal -->
+    <div id="miner-history-modal" class="updater-modal hidden">
+      <div class="updater-modal-card miner-modal-card">
+        <div class="updater-modal-header">
+          <div class="updater-title">
+            <span class="updater-icon">🛡️</span>
+            <h3>Monitor Anti-Mineração & Cryptojacking</h3>
+          </div>
+          <button id="btn-close-miner-modal" class="btn-nav">✕</button>
+        </div>
+        <div class="updater-modal-body">
+          <!-- Status Banner -->
+          <div class="miner-status-banner">
+            <div class="miner-status-icon">🛡️</div>
+            <div class="miner-status-info">
+              <div class="miner-status-title">
+                <strong>Escudo em Tempo Real:</strong>
+                <span class="status-pill-active">● ATIVO</span>
+              </div>
+              <p class="miner-status-desc">
+                O 4Navigator analisa as requisições de rede de todos os quadrantes e neutraliza scripts de mineração de criptomoedas (Coinhive, CryptoLoot, Webminepool, Monero WASM), protegendo sua CPU e GPU de sobrecargas não autorizadas.
+              </p>
+            </div>
+          </div>
+
+          <!-- Metric Counter & Actions Bar -->
+          <div class="miner-metrics-bar">
+            <div class="miner-metric-item">
+              <span class="metric-label">Ameaças Bloqueadas:</span>
+              <span id="miner-total-count" class="metric-value">0</span>
+            </div>
+            <div class="miner-actions-right">
+              <button id="btn-simulate-miner" class="btn btn-secondary text-primary" title="Simular uma tentativa de mineração bloqueada para testar o alerta">
+                🧪 Simular Detecção
+              </button>
+              <button id="btn-clear-miner-logs" class="btn btn-secondary text-danger" title="Limpar todo o histórico de ameaças bloqueadas">
+                🧹 Limpar Histórico
+              </button>
+            </div>
+          </div>
+
+          <!-- Blocked Attempts List -->
+          <div class="miner-list-header">
+            <span>Histórico de Tentativas Neutralizadas:</span>
+          </div>
+          <div id="miner-logs-container" class="miner-logs-container">
+            <!-- Dynamic items or empty state -->
+          </div>
+        </div>
+        <div class="updater-modal-footer">
+          <button id="btn-miner-modal-close" class="btn btn-secondary">Fechar</button>
+        </div>
+      </div>
+    </div>
+
     <div id="toast-container" class="toast-container"></div>
   </div>
 

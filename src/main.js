@@ -648,27 +648,96 @@ app.on('web-contents-created', (event, contents) => {
 });
 
 // ================= Advanced Security Suite (Features 1, 2, 3, 4, 5) =================
-// 1. Known Cryptojacking and Malicious Miner Patterns
-const CRYPTO_MINER_DOMAINS = [
-  'coinhive.com',
-  'coin-hive.com',
-  'crypto-loot.com',
-  'cryptoloot.pro',
-  'webminepool.com',
-  'jsecoin.com',
-  'minr.pw',
-  'coin-have.com',
-  'monerominer.rocks',
-  'authedmine.com',
-  '2giga.link',
-  'papoto.com',
-  'npcdn.net',
-  'mataharirama.xyz',
-  'listat.biz',
-  'lmodr.biz',
-  'minexmr.com',
-  'webassembly.stream'
+// 1. Known Cryptojacking and Malicious Miner Signatures
+const CRYPTO_MINER_PATTERNS = [
+  // Major Cryptominer Providers & Domains
+  { match: 'coinhive', label: 'Coinhive Web Cryptominer' },
+  { match: 'coin-hive', label: 'Coinhive Mirror' },
+  { match: 'crypto-loot', label: 'Crypto-Loot Webminer' },
+  { match: 'cryptoloot', label: 'CryptoLoot Miner' },
+  { match: 'webminepool', label: 'WebMinePool Miner' },
+  { match: 'jsecoin', label: 'JSECoin Webminer' },
+  { match: 'minr.pw', label: 'Minr Cryptojacking' },
+  { match: 'coin-have', label: 'CoinHave Miner' },
+  { match: 'monerominer', label: 'MoneroMiner Rocks' },
+  { match: 'authedmine', label: 'AuthedMine Webminer' },
+  { match: '2giga.link', label: '2Giga Cryptojacking' },
+  { match: 'papoto.com', label: 'Papoto Miner' },
+  { match: 'npcdn.net', label: 'NPCDN Miner Host' },
+  { match: 'mataharirama.xyz', label: 'MatahariRama Miner' },
+  { match: 'listat.biz', label: 'Listat Cryptojacking' },
+  { match: 'lmodr.biz', label: 'Lmodr Miner' },
+  { match: 'minexmr', label: 'MineXMR Mining Pool' },
+  { match: 'webassembly.stream', label: 'WebAssembly Miner Stream' },
+  { match: 'deepminer', label: 'DeepMiner Script' },
+  { match: 'coinimp', label: 'CoinImp Webminer' },
+  { match: 'coinnebula', label: 'CoinNebula Miner' },
+  { match: 'mineralt', label: 'MinerAlt Webminer' },
+  { match: 'crypto-webminer', label: 'Crypto Webminer' },
+  { match: 'coinblind', label: 'CoinBlind Miner' },
+  { match: 'monero-miner', label: 'Monero Webminer' },
+  { match: 'cryptonight', label: 'CryptoNight WASM Miner' },
+  { match: 'hashvault', label: 'HashVault Mining Pool' },
+  { match: 'supportxmr', label: 'SupportXMR Mining Pool' },
+  { match: 'nanopool', label: 'Nanopool Mining Service' },
+  { match: 'xmrpool', label: 'XMRPool Miner' },
+  { match: 'webminerpool', label: 'WebMinerPool' },
+  { match: 'coinhive-proxy', label: 'Coinhive Proxy WebSocket' },
+  { match: 'cnhv.co', label: 'Coinhive Shortlink' },
+  // Script Filename & WebAssembly Signatures
+  { match: 'coinhive.min.js', label: 'Coinhive Miner Script' },
+  { match: 'coinhive.js', label: 'Coinhive Miner Script' },
+  { match: 'cryptoloot.min.js', label: 'CryptoLoot Miner Script' },
+  { match: 'cryptonight.wasm', label: 'CryptoNight WebAssembly' },
+  { match: 'miner.wasm', label: 'WASM Cryptominer' },
+  { match: 'webminer.js', label: 'WebMiner Script' },
+  { match: 'webminer.min.js', label: 'WebMiner Script' },
+  { match: 'monero.wasm', label: 'Monero WebAssembly Miner' },
+  { match: 'xmr-miner', label: 'XMR Miner Script' }
 ];
+
+function detectMinerThreat(url) {
+  const lower = (url || '').toLowerCase();
+  for (const item of CRYPTO_MINER_PATTERNS) {
+    if (lower.includes(item.match)) {
+      return item.label;
+    }
+  }
+  return null;
+}
+
+function extractDomainName(rawUrl) {
+  if (!rawUrl) return null;
+  try {
+    const parsed = new URL(rawUrl);
+    return parsed.hostname.replace(/^www\./, '');
+  } catch (_) {
+    return rawUrl;
+  }
+}
+
+// Persistent Storage for Miner Blocked Logs
+const minerLogsPath = path.join(getStorageDirectory(), 'miner-blocked-logs.json');
+
+function loadMinerLogs() {
+  try {
+    if (fs.existsSync(minerLogsPath)) {
+      const content = fs.readFileSync(minerLogsPath, 'utf8');
+      return JSON.parse(content || '[]');
+    }
+  } catch (_) {}
+  return [];
+}
+
+let minerLogs = loadMinerLogs();
+
+function saveMinerLogs() {
+  try {
+    fs.writeFileSync(minerLogsPath, JSON.stringify(minerLogs.slice(0, 100), null, 2), 'utf8');
+  } catch (err) {
+    console.error('Failed to save miner logs to disk:', err);
+  }
+}
 
 // 5. Dangerous executable file extensions to block from automated downloading
 const BLOCKED_DOWNLOAD_EXTENSIONS = [
@@ -676,15 +745,39 @@ const BLOCKED_DOWNLOAD_EXTENSIONS = [
   '.msi', '.scr', '.pif', '.com', '.gadget', '.ps1', '.iso'
 ];
 
-function setupSecurityForSession(ses) {
+function setupSecurityForSession(ses, slotIndex = null) {
   if (!ses) return;
 
   // 1. Anti-Cryptojacking & Miner Request Blocking
   ses.webRequest.onBeforeRequest({ urls: ['*://*/*'] }, (details, callback) => {
-    const url = details.url.toLowerCase();
-    const isMiner = CRYPTO_MINER_DOMAINS.some(domain => url.includes(domain));
-    if (isMiner) {
-      console.warn(`[Security Guard] Bloqueada requisição para minerador de cripto: ${details.url}`);
+    const threatLabel = detectMinerThreat(details.url);
+    if (threatLabel) {
+      console.warn(`[Security Guard] Bloqueada requisição para minerador de cripto (${threatLabel}): ${details.url}`);
+
+      const siteOrigin = extractDomainName(details.referrer) || (slotIndex ? `Jogo no Painel ${slotIndex}` : 'Navegador');
+      const now = new Date();
+      const entry = {
+        id: 'miner_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+        timestamp: now.toISOString(),
+        timeFormatted: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        dateFormatted: now.toLocaleDateString('pt-BR'),
+        slot: slotIndex || null,
+        slotLabel: slotIndex ? `Painel ${slotIndex}` : 'Geral',
+        siteOrigin: siteOrigin,
+        fullReferrer: details.referrer || '',
+        blockedUrl: details.url,
+        threatName: threatLabel,
+        status: 'Bloqueado e Neutralizado'
+      };
+
+      minerLogs.unshift(entry);
+      if (minerLogs.length > 100) minerLogs = minerLogs.slice(0, 100);
+      saveMinerLogs();
+
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send('security:miner-blocked', entry);
+      }
+
       return callback({ cancel: true });
     }
     callback({ cancel: false });
@@ -726,6 +819,49 @@ function setupSecurityForSession(ses) {
     }
   });
 }
+
+// Miner Protection IPC Handlers
+ipcMain.handle('security:get-miner-logs', () => {
+  return {
+    logs: minerLogs,
+    totalBlocked: minerLogs.length,
+    isProtectionActive: true
+  };
+});
+
+ipcMain.handle('security:clear-miner-logs', () => {
+  minerLogs = [];
+  saveMinerLogs();
+  return { success: true };
+});
+
+ipcMain.handle('security:simulate-miner-detection', (event, { slot }) => {
+  const targetSlot = slot || 1;
+  const now = new Date();
+  const simulatedEntry = {
+    id: 'miner_sim_' + Date.now(),
+    timestamp: now.toISOString(),
+    timeFormatted: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+    dateFormatted: now.toLocaleDateString('pt-BR'),
+    slot: targetSlot,
+    slotLabel: `Painel ${targetSlot}`,
+    siteOrigin: `idle-game-teste.com (Painel ${targetSlot})`,
+    fullReferrer: 'https://idle-game-teste.com/play',
+    blockedUrl: 'https://coinhive.com/lib/coinhive.min.js',
+    threatName: 'Coinhive Web Cryptominer (Teste)',
+    status: 'Bloqueado e Neutralizado'
+  };
+
+  minerLogs.unshift(simulatedEntry);
+  if (minerLogs.length > 100) minerLogs = minerLogs.slice(0, 100);
+  saveMinerLogs();
+
+  if (mainWindow && mainWindow.webContents) {
+    mainWindow.webContents.send('security:miner-blocked', simulatedEntry);
+  }
+
+  return simulatedEntry;
+});
 
 // 2. Master PIN Security for Vault
 const securityConfigPath = path.join(getStorageDirectory(), 'vault-security.json');
@@ -798,10 +934,10 @@ ipcMain.handle('vault:remove-master-pin', (event, currentPin) => {
 
 app.whenReady().then(() => {
   // Apply security hardening to default session and to each persistent slot partition
-  setupSecurityForSession(session.defaultSession);
+  setupSecurityForSession(session.defaultSession, null);
   for (let i = 1; i <= 4; i++) {
     const slotSession = session.fromPartition(`persist:slot${i}`);
-    setupSecurityForSession(slotSession);
+    setupSecurityForSession(slotSession, i);
   }
 
   createWindow();

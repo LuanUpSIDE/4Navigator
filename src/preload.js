@@ -53,7 +53,15 @@ contextBridge.exposeInMainWorld('navigatorAPI', {
       const handler = (event, data) => callback(data);
       ipcRenderer.on('security:download-blocked', handler);
       return () => ipcRenderer.removeListener('security:download-blocked', handler);
-    }
+    },
+    onMinerBlocked: (callback) => {
+      const handler = (event, data) => callback(data);
+      ipcRenderer.on('security:miner-blocked', handler);
+      return () => ipcRenderer.removeListener('security:miner-blocked', handler);
+    },
+    getMinerLogs: () => ipcRenderer.invoke('security:get-miner-logs'),
+    clearMinerLogs: () => ipcRenderer.invoke('security:clear-miner-logs'),
+    simulateMinerDetection: (data) => ipcRenderer.invoke('security:simulate-miner-detection', data || {})
   },
   vaultSecurity: {
     hasMasterPin: () => ipcRenderer.invoke('vault:has-master-pin'),
