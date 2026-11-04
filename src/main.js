@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, Menu, clipboard } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { autoUpdater } = require('electron-updater');
@@ -54,6 +54,7 @@ function createWindow() {
     backgroundColor: '#0c0f17',
     icon: path.join(__dirname, '..', 'build', 'icon.png'),
     title: '4Navigator - Idle Game Browser',
+    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       webviewTag: true,
@@ -63,6 +64,9 @@ function createWindow() {
       spellcheck: false
     }
   });
+
+  mainWindow.setMenuBarVisibility(false);
+  Menu.setApplicationMenu(null);
 
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 
@@ -422,6 +426,105 @@ autoUpdater.on('update-downloaded', (info) => {
   sendUpdaterStatus('updater:status', {
     state: 'downloaded',
     version: info.version
+  });
+});
+
+// Native Context Menu (Right-Click) for Webviews & Main Window
+app.on('web-contents-created', (event, contents) => {
+  contents.on('context-menu', (e, params) => {
+    const isWebview = contents.getType() === 'webview';
+    const menuTemplate = [];
+
+    // 1. Navigation items (for games / webviews)
+    if (isWebview) {
+      if (contents.canGoBack()) {
+        menuTemplate.push({
+          label: 'Voltar',
+          accelerator: 'Alt+Left',
+          click: () => contents.goBack()
+        });
+      }
+      if (contents.canGoForward()) {
+        menuTemplate.push({
+          label: 'Avançar',
+          accelerator: 'Alt+Right',
+          click: () => contents.goForward()
+        });
+      }
+      menuTemplate.push({
+        label: 'Recarregar Jogo',
+        accelerator: 'CmdOrCtrl+R',
+        click: () => contents.reload()
+      });
+      menuTemplate.push({ type: 'separator' });
+    }
+
+    // 2. Media / Image Actions
+    if (params.mediaType === 'image') {
+      menuTemplate.push({
+        label: 'Copiar Imagem',
+        click: () => contents.copyImageAt(params.x, params.y)
+      });
+      if (params.srcURL) {
+        menuTemplate.push({
+          label: 'Copiar Endereço da Imagem',
+          click: () => clipboard.writeText(params.srcURL)
+        });
+        menuTemplate.push({
+          label: 'Abrir Imagem no Navegador',
+          click: () => shell.openExternal(params.srcURL)
+        });
+        menuTemplate.push({
+          label: 'Salvar Imagem Como...',
+          click: () => contents.downloadURL(params.srcURL)
+        });
+      }
+      menuTemplate.push({ type: 'separator' });
+    }
+
+    // 3. Link Actions
+    if (params.linkURL) {
+      menuTemplate.push({
+        label: 'Abrir Link no Navegador Padrão',
+        click: () => shell.openExternal(params.linkURL)
+      });
+      menuTemplate.push({
+        label: 'Copiar Endereço do Link',
+        click: () => clipboard.writeText(params.linkURL)
+      });
+      menuTemplate.push({ type: 'separator' });
+    }
+
+    // 4. Text Selection / Editing Actions
+    if (params.isEditable) {
+      menuTemplate.push({ role: 'undo', label: 'Desfazer' });
+      menuTemplate.push({ role: 'redo', label: 'Refazer' });
+      menuTemplate.push({ type: 'separator' });
+      menuTemplate.push({ role: 'cut', label: 'Recortar' });
+      menuTemplate.push({ role: 'copy', label: 'Copiar' });
+      menuTemplate.push({ role: 'paste', label: 'Colar' });
+      menuTemplate.push({ role: 'selectAll', label: 'Selecionar Tudo' });
+    } else if (params.selectionText && params.selectionText.trim().length > 0) {
+      menuTemplate.push({ role: 'copy', label: 'Copiar' });
+      const query = params.selectionText.trim();
+      menuTemplate.push({
+        label: `Pesquisar "${query.length > 25 ? query.substring(0, 22) + '...' : query}" no Google`,
+        click: () => shell.openExternal(`https://www.google.com/search?q=${encodeURIComponent(query)}`)
+      });
+      menuTemplate.push({ role: 'selectAll', label: 'Selecionar Tudo' });
+    }
+
+    // 5. Developer Tools (Inspect Element)
+    if (menuTemplate.length > 0 && menuTemplate[menuTemplate.length - 1].type !== 'separator') {
+      menuTemplate.push({ type: 'separator' });
+    }
+    menuTemplate.push({
+      label: 'Inspecionar Elemento',
+      click: () => contents.inspectElement(params.x, params.y)
+    });
+
+    const menu = Menu.buildFromTemplate(menuTemplate);
+    menu.popup();
   });
 });
 
