@@ -1,0 +1,12 @@
+version: 1.1.0
+files:
+  - url: 4Navigator-1.1.0.AppImage
+    sha512: mah0sCs8d4+JkUlC8NX6VK5nT+1wP7K5pbPq5aGikxtLpwnWSvSq38mVzzAWER1rvARh5gy5UK6VE5bow+0n0w==
+    size: 123845164
+    blockMapSize: 129600
+  - url: 4navigator_1.1.0_amd64.deb
+    sha512: ULodsq5iOVPywRKUT7hS0RHYMUEySEA2fSZ10c6yrOFocn6EKutIxYkQS0dg5OeyCwCJbtkyjGENYb62cTqtug==
+    size: 96138888
+path: 4Navigator-1.1.0.AppImage
+sha512: mah0sCs8d4+JkUlC8NX6VK5nT+1wP7K5pbPq5aGikxtLpwnWSvSq38mVzzAWER1rvARh5gy5UK6VE5bow+0n0w==
+releaseDate: '2026-11-02T12:09:24.770Z'

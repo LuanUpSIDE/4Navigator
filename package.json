@@ -26,8 +26,7 @@
     "publish": {
       "provider": "github",
       "owner": "LuanUpSIDE",
-      "repo": "4Navigator",
-      "private": true
+      "repo": "4Navigator"
     },
     "files": [
       "src/**/*",

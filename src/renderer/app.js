@@ -1271,7 +1271,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await window.navigatorAPI.updater.check();
       if (!res.success && res.error) {
         updaterCurrentState = 'error';
-        updaterStatusMessage.textContent = `Não foi possível verificar: ${res.error}`;
+        const is404 = String(res.error).includes('404');
+        updaterStatusMessage.textContent = is404
+          ? 'Nenhum pacote de atualização encontrado no GitHub para esta versão.'
+          : `Não foi possível verificar: ${res.error}`;
         btnUpdaterAction.disabled = false;
         btnUpdaterAction.textContent = 'Tentar Novamente';
       }
@@ -1283,25 +1286,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  let isAppPortable = false;
+  if (window.navigatorAPI?.updater?.getAppInfo) {
+    window.navigatorAPI.updater.getAppInfo().then(info => {
+      if (info) isAppPortable = Boolean(info.isPortable);
+    }).catch(() => {});
+  }
+
   if (btnUpdaterAction) {
     btnUpdaterAction.addEventListener('click', async () => {
       if (updaterCurrentState === 'idle' || updaterCurrentState === 'error' || updaterCurrentState === 'not-available') {
         await triggerCheckForUpdates();
       } else if (updaterCurrentState === 'available') {
-        updaterCurrentState = 'downloading';
-        btnUpdaterAction.disabled = true;
-        btnUpdaterAction.textContent = 'Baixando...';
-        updaterStatusMessage.textContent = 'Baixando nova versão em segundo plano...';
-        updaterProgressContainer.classList.remove('hidden');
-        updaterProgressBar.style.width = '0%';
-        updaterProgressPercent.textContent = '0%';
-        try {
-          await window.navigatorAPI.updater.download();
-        } catch (e) {
-          updaterCurrentState = 'error';
-          updaterStatusMessage.textContent = `Erro no download: ${e.message || e}`;
-          btnUpdaterAction.disabled = false;
-          btnUpdaterAction.textContent = 'Tentar Novamente';
+        if (isAppPortable) {
+          // Portable version: open direct release download in default browser to avoid AppData temp lock
+          await window.navigatorAPI.updater.openDownloadUrl('https://github.com/LuanUpSIDE/4Navigator/releases/latest');
+          showToast('🌐 Abrindo página de download da versão portátil...');
+        } else {
+          // Installed NSIS version: silent in-app background download
+          updaterCurrentState = 'downloading';
+          btnUpdaterAction.disabled = true;
+          btnUpdaterAction.textContent = 'Baixando...';
+          updaterStatusMessage.textContent = 'Baixando nova versão em segundo plano...';
+          updaterProgressContainer.classList.remove('hidden');
+          updaterProgressBar.style.width = '0%';
+          updaterProgressPercent.textContent = '0%';
+          try {
+            await window.navigatorAPI.updater.download();
+          } catch (e) {
+            updaterCurrentState = 'error';
+            updaterStatusMessage.textContent = `Erro no download: ${e.message || e}`;
+            btnUpdaterAction.disabled = false;
+            btnUpdaterAction.textContent = 'Tentar Novamente';
+          }
         }
       } else if (updaterCurrentState === 'downloaded') {
         updaterStatusMessage.textContent = 'Reiniciando o 4Navigator para aplicar a atualização...';
@@ -1318,6 +1335,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (window.navigatorAPI?.updater?.onStatus) {
     window.navigatorAPI.updater.onStatus((data) => {
       if (!data) return;
+      if (data.isPortable !== undefined) isAppPortable = Boolean(data.isPortable);
 
       switch (data.state) {
         case 'checking':
@@ -1332,13 +1350,20 @@ document.addEventListener('DOMContentLoaded', () => {
           updaterBadgeDot?.classList.remove('hidden');
           updaterTargetVersion?.classList.remove('hidden');
           if (updaterNewVersion && data.version) updaterNewVersion.textContent = `v${data.version}`;
-          updaterStatusMessage.textContent = `Uma nova versão (v${data.version}) foi encontrada!`;
+
+          if (isAppPortable) {
+            updaterStatusMessage.textContent = `Uma nova versão (v${data.version}) foi encontrada! Como você está usando a versão portátil, clique abaixo para baixar o executável atualizado diretamente.`;
+            btnUpdaterAction.textContent = 'Baixar Versão Portátil (.exe)';
+          } else {
+            updaterStatusMessage.textContent = `Uma nova versão (v${data.version}) foi encontrada e pronta para download!`;
+            btnUpdaterAction.textContent = 'Baixar Atualização';
+          }
+
           if (data.releaseNotes && updaterReleaseNotes) {
             updaterReleaseNotes.textContent = data.releaseNotes;
             updaterNotesContainer?.classList.remove('hidden');
           }
           btnUpdaterAction.disabled = false;
-          btnUpdaterAction.textContent = 'Baixar Atualização';
           showToast(`🚀 Nova versão v${data.version} disponível!`);
           break;
 
@@ -1380,7 +1405,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         case 'error':
           updaterCurrentState = 'error';
-          updaterStatusMessage.textContent = `Falha na verificação de atualização: ${data.message || 'Erro de rede'}`;
+          updaterStatusMessage.textContent = data.message || 'Falha na verificação de atualização.';
           btnUpdaterAction.disabled = false;
           btnUpdaterAction.textContent = 'Tentar Novamente';
           break;

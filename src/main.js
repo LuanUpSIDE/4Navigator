@@ -321,10 +321,26 @@ ipcMain.handle('credentials:delete', (event, id) => {
 });
 
 // Auto-Updater Handlers & Events
+const isPortable = Boolean(process.env.PORTABLE_EXECUTABLE_DIR || process.env.PORTABLE_EXECUTABLE_FILE);
+
+ipcMain.handle('updater:get-app-info', () => {
+  return {
+    version: app.getVersion(),
+    isPortable,
+    platform: process.platform
+  };
+});
+
+ipcMain.handle('updater:open-download-url', async (event, url) => {
+  const targetUrl = url || 'https://github.com/LuanUpSIDE/4Navigator/releases/latest';
+  await shell.openExternal(targetUrl);
+  return true;
+});
+
 ipcMain.handle('updater:check', async () => {
   try {
     const result = await autoUpdater.checkForUpdates();
-    return { success: true, updateInfo: result?.updateInfo || null };
+    return { success: true, updateInfo: result?.updateInfo || null, isPortable };
   } catch (error) {
     return { success: false, error: error.message };
   }
@@ -362,7 +378,8 @@ autoUpdater.on('update-available', (info) => {
     state: 'available',
     version: info.version,
     releaseDate: info.releaseDate,
-    releaseNotes: info.releaseNotes || 'Nova versão com melhorias e correções.'
+    releaseNotes: info.releaseNotes || 'Nova versão com melhorias e correções.',
+    isPortable
   });
 });
 
@@ -374,9 +391,20 @@ autoUpdater.on('update-not-available', (info) => {
 });
 
 autoUpdater.on('error', (err) => {
+  let friendlyMessage = 'Não foi possível verificar atualizações no momento.';
+  const raw = (err?.message || err?.stack || String(err || '')).toLowerCase();
+
+  if (raw.includes('404')) {
+    friendlyMessage = 'Nenhuma versão ou metadados de atualização encontrados no servidor do GitHub.';
+  } else if (raw.includes('net::') || raw.includes('enotfound') || raw.includes('econnrefused')) {
+    friendlyMessage = 'Sem conexão com a internet ou GitHub temporariamente inacessível.';
+  } else if (err?.message) {
+    friendlyMessage = err.message;
+  }
+
   sendUpdaterStatus('updater:status', {
     state: 'error',
-    message: err == null ? 'Erro desconhecido ao verificar atualizações' : (err.stack || err).toString()
+    message: friendlyMessage
   });
 });
 

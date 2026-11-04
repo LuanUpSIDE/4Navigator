@@ -19,6 +19,8 @@ contextBridge.exposeInMainWorld('navigatorAPI', {
     download: () => ipcRenderer.invoke('updater:download'),
     install: () => ipcRenderer.invoke('updater:install'),
     getCurrentVersion: () => ipcRenderer.invoke('updater:get-current-version'),
+    getAppInfo: () => ipcRenderer.invoke('updater:get-app-info'),
+    openDownloadUrl: (url) => ipcRenderer.invoke('updater:open-download-url', url),
     onStatus: (callback) => {
       const subscription = (event, data) => callback(data);
       ipcRenderer.on('updater:status', subscription);
