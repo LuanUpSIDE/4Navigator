@@ -1,12 +1,11 @@
-version: 1.2.0
+version: 1.3.0
 files:
-  - url: 4Navigator-1.2.0.AppImage
-    sha512: vihOm5PYOxXwLYYjX4hOnv1ST3cQNUW9qpJC85G0RRAbi4O9RDeQ0XYXHhu06w9ANkxx5G7lJtDdK3mUmx7vSw==
-    size: 123857318
-    blockMapSize: 129466
-  - url: 4navigator_1.2.0_amd64.deb
-    sha512: 7VcivCLYe76FoKA9krTNhz88F0qSVgsqWN25qdi5Dj+rWxwu7PCFKfa4R+7OMqQ6BdAPmOcMuBOALwO8doGLPg==
-    size: 96149088
-path: 4Navigator-1.2.0.AppImage
-sha512: vihOm5PYOxXwLYYjX4hOnv1ST3cQNUW9qpJC85G0RRAbi4O9RDeQ0XYXHhu06w9ANkxx5G7lJtDdK3mUmx7vSw==
-releaseDate: '2026-11-04T12:39:57.842Z'
+  - url: 4Navigator-1.3.0.AppImage
+    sha512: QI0639KlYiqMMdHGGZDUEagwhOLk5ImWOrVP6Na+vcVavg1ZTlUYmPj4Q46cfDUfqSAnyJx1aZQQ6A+8M+cc/g==
+    size: 123865410
+  - url: 4navigator_1.3.0_amd64.deb
+    sha512: sneRPr/kPDuBRvFQUGFF04QCCVmlsdr1aJwEfquX1s8uxwR1OlXDreMG4sas5T+cHK80i2ccI/gKlescazRSFw==
+    size: 96158048
+path: 4Navigator-1.3.0.AppImage
+sha512: QI0639KlYiqMMdHGGZDUEagwhOLk5ImWOrVP6Na+vcVavg1ZTlUYmPj4Q46cfDUfqSAnyJx1aZQQ6A+8M+cc/g==
+releaseDate: '2026-11-04T15:07:54.867Z'

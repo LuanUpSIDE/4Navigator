@@ -1,8 +1,8 @@
-version: 1.2.0
+version: 1.3.0
 files:
-  - url: 4Navigator.Setup.1.2.0.exe
-    sha512: a1LjSuNKN0RfBLupK3W9Q/sw+TN/NQ2NLztfZgLALU9yvjBWbxiTA20dIeaAnwkLiSGVFxh2nabNvEqRL6a1RA==
-    size: 109827709
-path: 4Navigator.Setup.1.2.0.exe
-sha512: a1LjSuNKN0RfBLupK3W9Q/sw+TN/NQ2NLztfZgLALU9yvjBWbxiTA20dIeaAnwkLiSGVFxh2nabNvEqRL6a1RA==
-releaseDate: '2026-11-04T13:15:16.339Z'
+  - url: 4Navigator.Setup.1.3.0.exe
+    sha512: NgStHnh82EoNAnocl3pBCegpDLzKbwEmt+GZpc5A9U/5BTnTdfJErKskQ1hjQHe3tdPBtEWC/kSS0J5NvYbJZg==
+    size: 109834310
+path: 4Navigator.Setup.1.3.0.exe
+sha512: NgStHnh82EoNAnocl3pBCegpDLzKbwEmt+GZpc5A9U/5BTnTdfJErKskQ1hjQHe3tdPBtEWC/kSS0J5NvYbJZg==
+releaseDate: '2026-11-04T15:10:35.009Z'

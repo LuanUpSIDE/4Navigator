@@ -37,15 +37,16 @@ function loadAppSettings() {
   return { gpuAcceleration: true }; // Enabled by default
 }
 
+let currentConfig = loadAppSettings();
+
 function saveAppSettings(settings) {
   try {
-    const current = loadAppSettings();
-    const updated = { ...current, ...settings };
-    fs.writeFileSync(configFilePath, JSON.stringify(updated, null, 2), 'utf8');
+    currentConfig = { ...currentConfig, ...settings };
+    fs.writeFileSync(configFilePath, JSON.stringify(currentConfig, null, 2), 'utf8');
     const fallbackPath = path.join(app.getPath('userData'), 'app-settings.json');
     if (configFilePath !== fallbackPath) {
       try {
-        fs.writeFileSync(fallbackPath, JSON.stringify(updated, null, 2), 'utf8');
+        fs.writeFileSync(fallbackPath, JSON.stringify(currentConfig, null, 2), 'utf8');
       } catch (_) {}
     }
     return true;
@@ -54,11 +55,21 @@ function saveAppSettings(settings) {
   }
 }
 
-const currentConfig = loadAppSettings();
 // GPU Hardware acceleration: enabled by default. If explicitly false, disable it before app is ready.
 if (currentConfig.gpuAcceleration === false) {
   app.disableHardwareAcceleration();
 }
+
+// Feature 5: Browser Camouflage & Anti-Bot Cloak (Google Chrome Desktop Spoofing)
+function getCleanChromeUserAgent() {
+  if (process.platform === 'win32') {
+    return 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36';
+  }
+  return 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36';
+}
+
+const CLEAN_CHROME_UA = getCleanChromeUserAgent();
+app.userAgentFallback = CLEAN_CHROME_UA;
 
 // Configure autoUpdater
 autoUpdater.autoDownload = false;
@@ -204,9 +215,8 @@ ipcMain.handle('app:open-external', async (event, url) => {
 
 // GPU Hardware Acceleration Handlers
 ipcMain.handle('gpu:get-status', () => {
-  const settings = loadAppSettings();
   return {
-    gpuAcceleration: settings.gpuAcceleration !== false // true by default
+    gpuAcceleration: currentConfig.gpuAcceleration !== false // true by default
   };
 });
 
@@ -215,6 +225,23 @@ ipcMain.handle('gpu:set-status', (event, enabled) => {
   saveAppSettings({ gpuAcceleration: isEnabled });
   return { success: true, gpuAcceleration: isEnabled };
 });
+
+// Online Resilience & Cloak Settings Handlers
+ipcMain.handle('online:get-settings', () => {
+  return {
+    autoReconnect: currentConfig.autoReconnect !== false,
+    keepAlive: currentConfig.keepAlive !== false,
+    browserCloak: currentConfig.browserCloak !== false,
+    userAgent: CLEAN_CHROME_UA
+  };
+});
+
+ipcMain.handle('online:save-settings', (event, newSettings) => {
+  saveAppSettings(newSettings);
+  return { success: true };
+});
+
+ipcMain.handle('online:get-user-agent', () => CLEAN_CHROME_UA);
 
 ipcMain.handle('app:relaunch', () => {
   app.relaunch();
@@ -496,19 +523,30 @@ autoUpdater.on('checking-for-update', () => {
   sendUpdaterStatus('updater:status', { state: 'checking' });
 });
 
+function isVersionGreater(v1, v2) {
+  if (!v1 || !v2) return false;
+  const parts1 = String(v1).replace(/^v/, '').split('.').map(p => parseInt(p, 10) || 0);
+  const parts2 = String(v2).replace(/^v/, '').split('.').map(p => parseInt(p, 10) || 0);
+  const maxLen = Math.max(parts1.length, parts2.length);
+  for (let i = 0; i < maxLen; i++) {
+    const n1 = parts1[i] || 0;
+    const n2 = parts2[i] || 0;
+    if (n1 > n2) return true;
+    if (n1 < n2) return false;
+  }
+  return false;
+}
+
 autoUpdater.on('update-available', (info) => {
-  try {
-    const semver = require('semver');
-    const currentVer = app.getVersion();
-    if (info && info.version && !semver.gt(info.version, currentVer)) {
-      console.log(`[AutoUpdater] Versão remota v${info.version} não é mais recente que a atual v${currentVer}. Nenhuma notificação de atualização necessária.`);
-      sendUpdaterStatus('updater:status', {
-        state: 'not-available',
-        version: currentVer
-      });
-      return;
-    }
-  } catch (_) {}
+  const currentVer = app.getVersion();
+  if (info && info.version && !isVersionGreater(info.version, currentVer)) {
+    console.log(`[AutoUpdater] Versão remota v${info.version} não é mais recente que a atual v${currentVer}. Nenhuma notificação de atualização necessária.`);
+    sendUpdaterStatus('updater:status', {
+      state: 'not-available',
+      version: currentVer
+    });
+    return;
+  }
 
   sendUpdaterStatus('updater:status', {
     state: 'available',
@@ -831,6 +869,24 @@ function setupSecurityForSession(ses, slotIndex = null) {
       }
     }
   });
+
+  // Feature 5: Browser Camouflage & Anti-Bot Cloak (Google Chrome Headers Alignment)
+  ses.webRequest.onBeforeSendHeaders((details, callback) => {
+    const headers = { ...details.requestHeaders };
+    if (currentConfig.browserCloak !== false) {
+      headers['User-Agent'] = CLEAN_CHROME_UA;
+      if (headers['Sec-CH-UA']) {
+        headers['Sec-CH-UA'] = '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"';
+      }
+      if (headers['Sec-CH-UA-Mobile']) {
+        headers['Sec-CH-UA-Mobile'] = '?0';
+      }
+      if (headers['Sec-CH-UA-Platform']) {
+        headers['Sec-CH-UA-Platform'] = process.platform === 'win32' ? '"Windows"' : '"Linux"';
+      }
+    }
+    callback({ requestHeaders: headers });
+  });
 }
 
 // Miner Protection IPC Handlers
@@ -946,10 +1002,16 @@ ipcMain.handle('vault:remove-master-pin', (event, currentPin) => {
 });
 
 app.whenReady().then(() => {
-  // Apply security hardening to default session and to each persistent slot partition
+  // Apply clean User-Agent and security hardening to default session and to each persistent slot partition
+  if (currentConfig.browserCloak !== false) {
+    session.defaultSession.setUserAgent(CLEAN_CHROME_UA);
+  }
   setupSecurityForSession(session.defaultSession, null);
   for (let i = 1; i <= 4; i++) {
     const slotSession = session.fromPartition(`persist:slot${i}`);
+    if (currentConfig.browserCloak !== false) {
+      slotSession.setUserAgent(CLEAN_CHROME_UA);
+    }
     setupSecurityForSession(slotSession, i);
   }
 

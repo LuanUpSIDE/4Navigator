@@ -131,6 +131,59 @@
                 <span id="options-miner-badge" class="miner-count-badge hidden">0</span>
               </button>
             </div>
+
+            <div class="dropdown-divider"></div>
+
+            <!-- Section 7: Conexão Online & Anti-Disconnect -->
+            <div class="dropdown-section-title">
+              <span>🌐 Conexão Online & Anti-Disconnect</span>
+            </div>
+            <div class="options-online-container">
+              <div class="gpu-toggle-row">
+                <div class="gpu-text-desc">
+                  <strong>Watchdog Anti-Queda</strong>
+                  <span>Reconecta e clica em "Reconnect" automaticamente</span>
+                </div>
+                <label class="switch-toggle" title="Ativar auto-reconexão contra quedas de conexão">
+                  <input type="checkbox" id="toggle-auto-reconnect" checked>
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+              <div class="gpu-toggle-row" style="margin-top: 6px;">
+                <div class="gpu-text-desc">
+                  <strong>Keep-Alive Anti-AFK</strong>
+                  <span>Mantém a sessão ativa contra kick por inatividade</span>
+                </div>
+                <label class="switch-toggle" title="Ativar pulso anti-inatividade a cada 4 minutos">
+                  <input type="checkbox" id="toggle-keep-alive" checked>
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+              <div class="online-watchdog-status">
+                <span id="watchdog-status-text">🟢 Sentinela 24/7 Ativo</span>
+                <span id="watchdog-reconnect-badge" class="badge-count">0 reconexões</span>
+              </div>
+            </div>
+
+            <div class="dropdown-divider"></div>
+
+            <!-- Section 8: Camuflagem do Navegador -->
+            <div class="dropdown-section-title">
+              <span>🎭 Camuflagem & Anti-Bot Cloak</span>
+            </div>
+            <div class="options-cloak-container">
+              <div class="gpu-toggle-row">
+                <div class="gpu-text-desc">
+                  <strong>Mascara Google Chrome</strong>
+                  <span>User-Agent oficial para Cloudflare e jogos online</span>
+                </div>
+                <label class="switch-toggle" title="Mascara o navegador como Chrome oficial">
+                  <input type="checkbox" id="toggle-browser-cloak" checked>
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+              <span class="fps-info-hint" id="cloak-ua-hint">Identificação: Google Chrome Desktop (Sem rastros de Electron)</span>
+            </div>
           </div>
         </div>
 

@@ -26,6 +26,68 @@ document.addEventListener('DOMContentLoaded', () => {
   let isGlobalMuted = false;
   let lastFocusedQuadId = 1;
 
+  // Online Resilience & Anti-Disconnect State
+  const onlineSettings = {
+    autoReconnect: true,
+    keepAlive: true,
+    browserCloak: true,
+    userAgent: ''
+  };
+  const watchdogQuadState = new Map();
+  let totalWatchdogReconnections = parseInt(sessionStorage.getItem('4nav_reconnect_count') || '0', 10);
+
+  function resetWatchdogRetry(quadId) {
+    const state = watchdogQuadState.get(quadId);
+    if (state) {
+      state.retryCount = 0;
+      if (state.retryTimeout) {
+        clearTimeout(state.retryTimeout);
+        state.retryTimeout = null;
+      }
+    }
+  }
+
+  function handleWatchdogFailure(quad, errorDesc) {
+    if (!onlineSettings.autoReconnect) return;
+    if (!quad || !quad.webview) return;
+
+    const currentUrl = quad.webview.getURL() || quad.urlInput.value;
+    if (!currentUrl || currentUrl === 'about:blank') return;
+
+    const state = watchdogQuadState.get(quad.id) || { retryCount: 0, lastRetryTime: 0, retryTimeout: null };
+    const now = Date.now();
+
+    // Debounce retries: don't double schedule within 2.5 seconds
+    if (state.retryTimeout && (now - state.lastRetryTime) < 2500) {
+      return;
+    }
+
+    state.retryCount++;
+    state.lastRetryTime = now;
+    // Progressive backoff: 3s, 5s, 8s, up to max 12s
+    const delaySec = Math.min(12, 2 + state.retryCount * 2);
+
+    totalWatchdogReconnections++;
+    sessionStorage.setItem('4nav_reconnect_count', String(totalWatchdogReconnections));
+    if (typeof updateWatchdogUI === 'function') updateWatchdogUI();
+
+    showToast(`🔄 [Sentinela P${quad.id}] Falha de rede (${errorDesc}). Reconectando em ${delaySec}s...`, 4000);
+
+    if (state.retryTimeout) clearTimeout(state.retryTimeout);
+    state.retryTimeout = setTimeout(() => {
+      state.retryTimeout = null;
+      try {
+        if (quad.webview && quad.webview.getURL() && quad.webview.getURL() !== 'about:blank') {
+          quad.reload();
+        } else if (currentUrl && currentUrl !== 'about:blank') {
+          quad.navigateTo(currentUrl);
+        }
+      } catch (_) {}
+    }, delaySec * 1000);
+
+    watchdogQuadState.set(quad.id, state);
+  }
+
   // Feature 4: Security Shield & Protocol Indicator
   function updateQuadrantSecurityShield(quad, url) {
     if (!quad || !quad.urlShield) return;
@@ -146,14 +208,6 @@ document.addEventListener('DOMContentLoaded', () => {
               webview.sendInputEvent({ type: 'mouseDown', x: targetX, y: targetY, button: 'left', clickCount: 1 });
               webview.sendInputEvent({ type: 'mouseUp', x: targetX, y: targetY, button: 'left', clickCount: 1 });
             } catch (_) {}
-
-            // DOM backup click
-            webview.executeJavaScript(`
-              (()=>{
-                const el = document.elementFromPoint(${targetX}, ${targetY});
-                if (el) el.click();
-              })()
-            `).catch(() => {});
           }, delay);
 
           showToast(`Painel ${id}: Auto-Clicker Ativado (${cps} CPS)`);
@@ -282,6 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateBookmarkButtons();
         updateCredentialButtons();
         updateQuadrantSecurityShield(quad, webview.getURL());
+        resetWatchdogRetry(quad.id);
       }
     });
 
@@ -292,6 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateBookmarkButtons();
         updateCredentialButtons();
         updateQuadrantSecurityShield(quad, event.url);
+        resetWatchdogRetry(quad.id);
       }
     });
 
@@ -305,6 +361,27 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       if (e.url) {
         quad.navigateTo(e.url);
+      }
+    });
+
+    // Feature 5: Inject Client-Side Camouflage on Dom Ready
+    webview.addEventListener('dom-ready', () => {
+      if (onlineSettings.browserCloak !== false) {
+        webview.executeJavaScript(`
+          try {
+            Object.defineProperty(navigator, 'webdriver', { get: () => false, configurable: true });
+            if (!window.chrome) window.chrome = {};
+            if (!window.chrome.runtime) window.chrome.runtime = {};
+          } catch (_) {}
+        `).catch(() => {});
+      }
+    });
+
+    // Feature 1: Watchdog did-fail-load handler for network disconnections
+    webview.addEventListener('did-fail-load', (e) => {
+      if (e.errorCode === -3) return; // Ignore user navigation / redirect aborts
+      if (webview.getURL() && webview.getURL() !== 'about:blank') {
+        handleWatchdogFailure(quad, e.errorDescription || 'Falha de conexão');
       }
     });
 
@@ -476,9 +553,13 @@ document.addEventListener('DOMContentLoaded', () => {
   renderBookmarks();
 
   // ================= Global Controls =================
-  // ================= Global Controls =================
   const btnOptionsMenu = document.getElementById('btn-options-menu');
   const optionsMenu = document.getElementById('options-menu');
+
+  function closeAllDropdowns() {
+    if (optionsMenu) optionsMenu.classList.add('hidden');
+  }
+
   const btnExportBackup = document.getElementById('btn-export-backup');
   const btnImportBackupTrigger = document.getElementById('btn-import-backup-trigger');
   const backupFileInput = document.getElementById('backup-file-input');
@@ -512,7 +593,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.addEventListener('click', () => {
-      optionsMenu.classList.add('hidden');
+      closeAllDropdowns();
     });
 
     optionsMenu.addEventListener('click', (e) => e.stopPropagation());
@@ -1761,6 +1842,170 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial check of credential indicators
   setTimeout(updateCredentialButtons, 1500);
+
+  // ================= Online Resilience & Cloak Logic =================
+  const toggleAutoReconnect = document.getElementById('toggle-auto-reconnect');
+  const toggleKeepAlive = document.getElementById('toggle-keep-alive');
+  const watchdogStatusText = document.getElementById('watchdog-status-text');
+  const watchdogReconnectBadge = document.getElementById('watchdog-reconnect-badge');
+  const toggleBrowserCloak = document.getElementById('toggle-browser-cloak');
+  const cloakUaHint = document.getElementById('cloak-ua-hint');
+
+  function updateWatchdogUI() {
+    if (watchdogStatusText) {
+      if (onlineSettings.autoReconnect) {
+        watchdogStatusText.textContent = '🟢 Sentinela 24/7 Ativo';
+        watchdogStatusText.style.color = '#10b981';
+      } else {
+        watchdogStatusText.textContent = '⚪ Sentinela Desativado';
+        watchdogStatusText.style.color = 'var(--text-muted)';
+      }
+    }
+    if (watchdogReconnectBadge) {
+      watchdogReconnectBadge.textContent = `${totalWatchdogReconnections} ${totalWatchdogReconnections === 1 ? 'reconexão' : 'reconexões'}`;
+    }
+  }
+
+  // Initial load of online settings from backend
+  if (window.navigatorAPI?.online?.getSettings) {
+    window.navigatorAPI.online.getSettings().then(cfg => {
+      if (cfg) {
+        onlineSettings.autoReconnect = cfg.autoReconnect !== false;
+        onlineSettings.keepAlive = cfg.keepAlive !== false;
+        onlineSettings.browserCloak = cfg.browserCloak !== false;
+        if (toggleAutoReconnect) toggleAutoReconnect.checked = onlineSettings.autoReconnect;
+        if (toggleKeepAlive) toggleKeepAlive.checked = onlineSettings.keepAlive;
+        if (toggleBrowserCloak) toggleBrowserCloak.checked = onlineSettings.browserCloak;
+        if (cloakUaHint) {
+          cloakUaHint.textContent = onlineSettings.browserCloak
+            ? 'Identificação: Google Chrome Desktop (Sem rastros de Electron)'
+            : 'Identificação: Padrão Electron (Camuflagem desligada)';
+        }
+        updateWatchdogUI();
+      }
+    }).catch(() => {});
+  }
+
+  toggleAutoReconnect?.addEventListener('change', () => {
+    onlineSettings.autoReconnect = toggleAutoReconnect.checked;
+    window.navigatorAPI?.online?.saveSettings({ autoReconnect: onlineSettings.autoReconnect });
+    updateWatchdogUI();
+    showToast(onlineSettings.autoReconnect ? '🛡️ Sentinela Anti-Queda Ativado' : 'Sentinela Anti-Queda Desativado');
+  });
+
+  toggleKeepAlive?.addEventListener('change', () => {
+    onlineSettings.keepAlive = toggleKeepAlive.checked;
+    window.navigatorAPI?.online?.saveSettings({ keepAlive: onlineSettings.keepAlive });
+    showToast(onlineSettings.keepAlive ? '⚡ Keep-Alive Anti-AFK Ativado' : 'Keep-Alive Anti-AFK Desativado');
+  });
+
+  toggleBrowserCloak?.addEventListener('change', () => {
+    onlineSettings.browserCloak = toggleBrowserCloak.checked;
+    window.navigatorAPI?.online?.saveSettings({ browserCloak: onlineSettings.browserCloak });
+    if (cloakUaHint) {
+      cloakUaHint.textContent = onlineSettings.browserCloak
+        ? 'Identificação: Google Chrome Desktop (Sem rastros de Electron)'
+        : 'Identificação: Padrão Electron (Camuflagem desligada)';
+    }
+    showToast(onlineSettings.browserCloak ? '🎭 Camuflagem Chrome Ativada (Requer reiniciar ou recarregar os jogos)' : 'Camuflagem Chrome Desativada');
+  });
+
+  // Feature 2: In-Game Reconnect Button Auto-Clicker Scanner (Every 12s)
+  setInterval(() => {
+    if (!onlineSettings.autoReconnect) return;
+    quadrants.forEach(quad => {
+      if (!quad.webview || !quad.webview.getURL() || quad.webview.getURL() === 'about:blank') return;
+      quad.webview.executeJavaScript(`
+        (() => {
+          try {
+            const reconnectKeywords = [
+              'reconnect', 'reconectar', 'try again', 'tentar novamente',
+              'recarregar', 'reload game', 'resume game', 'reconnecting', 'play again'
+            ];
+            const buttons = Array.from(document.querySelectorAll('button, a, .btn, [role="button"], input[type="button"], input[type="submit"]'));
+            for (const btn of buttons) {
+              const text = (btn.innerText || btn.textContent || btn.value || '').trim().toLowerCase();
+              if (reconnectKeywords.some(kw => text === kw || text.includes(kw))) {
+                const rect = btn.getBoundingClientRect();
+                if (rect.width > 0 && rect.height > 0 && window.getComputedStyle(btn).display !== 'none' && window.getComputedStyle(btn).visibility !== 'hidden') {
+                  btn.click();
+                  return true;
+                }
+              }
+            }
+          } catch (_) {}
+          return false;
+        })()
+      `).then(clicked => {
+        if (clicked) {
+          totalWatchdogReconnections++;
+          sessionStorage.setItem('4nav_reconnect_count', String(totalWatchdogReconnections));
+          updateWatchdogUI();
+          showToast(`⚡ [Sentinela P${quad.id}] Sessão reconectada automaticamente no jogo!`, 3500);
+        }
+      }).catch(() => {});
+    });
+  }, 12000);
+
+  // Feature 3: Anti-AFK Keep-Alive Pulse (Every 3 minutes)
+  setInterval(() => {
+    if (!onlineSettings.keepAlive) return;
+    quadrants.forEach(quad => {
+      if (!quad.webview || !quad.webview.getURL() || quad.webview.getURL() === 'about:blank') return;
+      quad.webview.executeJavaScript(`
+        try {
+          window.dispatchEvent(new Event('focus'));
+          document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 10, clientY: 10 }));
+        } catch (_) {}
+      `).catch(() => {});
+    });
+  }, 180000);
+
+  // Global Escape key handler to close modals & dropdowns gracefully
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (optionsMenu && !optionsMenu.classList.contains('hidden')) {
+        closeAllDropdowns();
+        return;
+      }
+      const bookmarkModal = document.getElementById('bookmark-modal');
+      if (bookmarkModal && !bookmarkModal.classList.contains('hidden')) {
+        bookmarkModal.classList.add('hidden');
+        return;
+      }
+      const credQuickModal = document.getElementById('credentials-quick-modal');
+      if (credQuickModal && !credQuickModal.classList.contains('hidden')) {
+        credQuickModal.classList.add('hidden');
+        return;
+      }
+      if (vaultModal && !vaultModal.classList.contains('hidden')) {
+        vaultModal.classList.add('hidden');
+        return;
+      }
+      const pinModal = document.getElementById('vault-pin-modal');
+      if (pinModal && !pinModal.classList.contains('hidden')) {
+        closeUnlockPinModal(false);
+        return;
+      }
+      const setPinModal = document.getElementById('vault-set-pin-modal');
+      if (setPinModal && !setPinModal.classList.contains('hidden')) {
+        setPinModal.classList.add('hidden');
+        return;
+      }
+      if (minerModal && !minerModal.classList.contains('hidden')) {
+        closeMinerModal();
+        return;
+      }
+      if (updaterModal && !updaterModal.classList.contains('hidden')) {
+        closeUpdaterModal();
+        return;
+      }
+      if (notesDrawer && notesDrawer.classList.contains('open')) {
+        notesDrawer.classList.remove('open');
+        return;
+      }
+    }
+  });
 
   // ================= Auto-Updater Logic =================
   const btnCheckUpdates = document.getElementById('btn-check-updates');

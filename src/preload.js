@@ -68,5 +68,10 @@ contextBridge.exposeInMainWorld('navigatorAPI', {
     setMasterPin: (data) => ipcRenderer.invoke('vault:set-master-pin', data),
     verifyMasterPin: (pin) => ipcRenderer.invoke('vault:verify-master-pin', pin),
     removeMasterPin: (currentPin) => ipcRenderer.invoke('vault:remove-master-pin', currentPin)
+  },
+  online: {
+    getSettings: () => ipcRenderer.invoke('online:get-settings'),
+    saveSettings: (settings) => ipcRenderer.invoke('online:save-settings', settings),
+    getUserAgent: () => ipcRenderer.invoke('online:get-user-agent')
   }
 });
