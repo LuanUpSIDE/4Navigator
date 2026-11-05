@@ -25,27 +25,21 @@
             <span class="icon">⚙️</span> Opções
           </button>
           <div id="options-menu" class="dropdown-menu options-dropdown-menu hidden">
-            <!-- Section 1: Presets -->
+            <!-- Section 1: Presets Personalizados -->
             <div class="dropdown-section-title">
-              <span>📑 Presets de Jogos</span>
+              <span>📑 Presets Personalizados</span>
             </div>
-            <div class="options-presets-list">
-              <button class="dropdown-item" data-preset="classics">
-                🍪 <strong>Clássicos</strong> (Cookie Clicker, Paperclips, Candy Box 2, Dark Room)
-              </button>
-              <button class="dropdown-item" data-preset="progression">
-                ⚔️ <strong>RPG & Estratégia</strong> (Trimps, Melvor, Evolve, Crank)
-              </button>
-              <button class="dropdown-item" data-preset="sci-fi">
-                🚀 <strong>Sci-Fi / Números</strong> (Antimatter Dimensions, Synergism, Space Company)
-              </button>
-              <div class="dropdown-sub-actions">
-                <button id="btn-save-custom-preset" class="dropdown-item text-primary">
-                  💾 Salvar Quarteto Atual como Meu Preset
+            <div class="options-presets-container">
+              <div class="preset-quick-actions">
+                <button id="btn-save-current-preset" class="dropdown-item text-primary" title="Salvar as telas e URLs abertas atualmente como um novo preset">
+                  💾 <strong>Salvar Telas Atuais como Preset</strong>
                 </button>
-                <button id="btn-load-custom-preset" class="dropdown-item text-success">
-                  📂 Carregar Meu Preset Salvo
+                <button id="btn-open-preset-manager" class="dropdown-item text-accent" title="Criar, editar e personalizar presets de jogos">
+                  ⚙️ <strong>Gerenciar & Criar Presets</strong>
                 </button>
+              </div>
+              <div class="presets-saved-list" id="options-presets-list">
+                <!-- Dynamically populated list of custom presets with 1-click apply -->
               </div>
             </div>
 
@@ -754,6 +748,82 @@
         </div>
         <div class="updater-modal-footer">
           <button id="btn-miner-modal-close" class="btn btn-secondary">Fechar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom Presets Manager Modal -->
+    <div id="custom-preset-modal" class="updater-modal hidden">
+      <div class="updater-modal-card preset-modal-card">
+        <div class="updater-modal-header">
+          <div class="updater-title">
+            <span class="updater-icon">📑</span>
+            <h3 id="preset-modal-main-title">Gerenciador de Presets Personalizados</h3>
+          </div>
+          <button id="btn-close-preset-modal" class="btn-nav" title="Fechar">✕</button>
+        </div>
+        <div class="updater-modal-body preset-modal-body">
+          <!-- Preset Creator / Editor Form Card -->
+          <div class="preset-form-card" id="preset-form-section">
+            <input type="hidden" id="preset-edit-id" value="">
+            <div class="preset-form-header">
+              <strong id="preset-form-mode-title">➕ Criar Novo Preset</strong>
+              <button id="btn-autofill-current-screens" type="button" class="btn btn-secondary btn-sm" title="Preencher automaticamente com as telas e URLs abertas agora">
+                ⚡ Copiar Telas Abertas
+              </button>
+            </div>
+            
+            <div class="form-group">
+              <label for="preset-name-input">Nome do Preset:</label>
+              <input type="text" id="preset-name-input" class="bookmark-input" placeholder="Ex: Meus RPGs Favoritos, Farm Noturno..." maxlength="40">
+            </div>
+
+            <div class="form-group">
+              <label>Quantidade de Telas:</label>
+              <div class="preset-screens-toggle">
+                <button type="button" class="preset-screen-opt" data-screens="1">1 Tela</button>
+                <button type="button" class="preset-screen-opt" data-screens="2">2 Telas</button>
+                <button type="button" class="preset-screen-opt" data-screens="3">3 Telas</button>
+                <button type="button" class="preset-screen-opt active" data-screens="4">4 Telas</button>
+              </div>
+            </div>
+
+            <div class="preset-slots-grid">
+              <div class="preset-slot-field" id="slot-field-1">
+                <label><span class="slot-badge slot-1">P1</span> Painel 1 URL:</label>
+                <input type="text" id="preset-url-1" class="bookmark-input" placeholder="https://..." spellcheck="false">
+              </div>
+              <div class="preset-slot-field" id="slot-field-2">
+                <label><span class="slot-badge slot-2">P2</span> Painel 2 URL:</label>
+                <input type="text" id="preset-url-2" class="bookmark-input" placeholder="https://..." spellcheck="false">
+              </div>
+              <div class="preset-slot-field" id="slot-field-3">
+                <label><span class="slot-badge slot-3">P3</span> Painel 3 URL:</label>
+                <input type="text" id="preset-url-3" class="bookmark-input" placeholder="https://..." spellcheck="false">
+              </div>
+              <div class="preset-slot-field" id="slot-field-4">
+                <label><span class="slot-badge slot-4">P4</span> Painel 4 URL:</label>
+                <input type="text" id="preset-url-4" class="bookmark-input" placeholder="https://..." spellcheck="false">
+              </div>
+            </div>
+
+            <div class="preset-form-actions">
+              <button id="btn-cancel-preset-form" type="button" class="btn btn-secondary hidden">Cancelar Edição</button>
+              <button id="btn-save-preset-submit" type="button" class="btn btn-primary">Salvar Preset</button>
+            </div>
+          </div>
+
+          <!-- Saved Presets List Header & Container -->
+          <div class="preset-list-section-header">
+            <span>Meus Presets Salvos:</span>
+            <span id="preset-total-badge" class="badge-count">0 salvos</span>
+          </div>
+          <div id="modal-presets-list" class="modal-presets-container">
+            <!-- Dynamic list of custom presets -->
+          </div>
+        </div>
+        <div class="updater-modal-footer">
+          <button id="btn-preset-modal-close" class="btn btn-secondary">Fechar</button>
         </div>
       </div>
     </div>

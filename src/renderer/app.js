@@ -1,27 +1,6 @@
 // 4Navigator — Main Renderer Application Logic
 
 document.addEventListener('DOMContentLoaded', () => {
-  const PRESETS = {
-    classics: [
-      'https://orteil.dashnet.org/cookieclicker/',
-      'https://www.decisionproblem.com/paperclips/',
-      'https://candybox2.github.io/',
-      'https://adarkroom.doublespeakgames.com/'
-    ],
-    progression: [
-      'https://trimps.github.io/',
-      'https://pmotschmann.github.io/Evolve/',
-      'https://crank.ncase.me/',
-      'https://melvoridle.com/'
-    ],
-    'sci-fi': [
-      'https://ivark.github.io/AntimatterDimensions/',
-      'https://pseudonian.github.io/SynergismOfficial/',
-      'https://sparticle999.github.io/SpaceCompany/',
-      'https://swarmsim.github.io/'
-    ]
-  };
-
   const quadrants = [];
   let isGlobalMuted = false;
   let lastFocusedQuadId = 1;
@@ -673,65 +652,387 @@ document.addEventListener('DOMContentLoaded', () => {
     optionsMenu.addEventListener('click', (e) => e.stopPropagation());
   }
 
-  // Load Preset Function
-  function loadPreset(urls) {
-    if (!urls || urls.length === 0) return;
-    urls.slice(0, 4).forEach((url, idx) => {
-      if (quadrants[idx]) {
-        if (quadrants[idx].isClosed) {
-          quadrants[idx].isClosed = false;
-          quadrants[idx].el.classList.remove('is-closed');
+  // ================= Custom Presets Feature =================
+  const customPresetModal = document.getElementById('custom-preset-modal');
+  const btnClosePresetModal = document.getElementById('btn-close-preset-modal');
+  const btnPresetModalClose = document.getElementById('btn-preset-modal-close');
+  const btnSaveCurrentPreset = document.getElementById('btn-save-current-preset');
+  const btnOpenPresetManager = document.getElementById('btn-open-preset-manager');
+  const btnAutofillCurrentScreens = document.getElementById('btn-autofill-current-screens');
+  const presetEditIdInput = document.getElementById('preset-edit-id');
+  const presetFormModeTitle = document.getElementById('preset-form-mode-title');
+  const presetNameInput = document.getElementById('preset-name-input');
+  const presetScreenOptBtns = document.querySelectorAll('.preset-screen-opt');
+  const presetUrlInputs = [
+    document.getElementById('preset-url-1'),
+    document.getElementById('preset-url-2'),
+    document.getElementById('preset-url-3'),
+    document.getElementById('preset-url-4')
+  ];
+  const slotFieldEls = [
+    document.getElementById('slot-field-1'),
+    document.getElementById('slot-field-2'),
+    document.getElementById('slot-field-3'),
+    document.getElementById('slot-field-4')
+  ];
+  const btnCancelPresetForm = document.getElementById('btn-cancel-preset-form');
+  const btnSavePresetSubmit = document.getElementById('btn-save-preset-submit');
+  const optionsPresetsList = document.getElementById('options-presets-list');
+  const modalPresetsList = document.getElementById('modal-presets-list');
+  const presetTotalBadge = document.getElementById('preset-total-badge');
+
+  let formSelectedScreens = 4;
+
+  function getUserPresets() {
+    try {
+      const data = localStorage.getItem('4nav_custom_presets_v2');
+      if (data) {
+        const parsed = JSON.parse(data);
+        if (Array.isArray(parsed)) return parsed;
+      }
+      // Migrate legacy preset if exists
+      const legacy = localStorage.getItem('4nav_custom_preset');
+      if (legacy) {
+        const urls = JSON.parse(legacy);
+        if (Array.isArray(urls) && urls.length > 0) {
+          const migrated = [{
+            id: 'preset_legacy_' + Date.now(),
+            name: 'Meu Preset Salvo',
+            screens: 4,
+            urls: urls.slice(0, 4),
+            updatedAt: Date.now()
+          }];
+          localStorage.setItem('4nav_custom_presets_v2', JSON.stringify(migrated));
+          localStorage.removeItem('4nav_custom_preset');
+          return migrated;
         }
-        quadrants[idx].navigateTo(url);
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  function saveUserPresets(presets) {
+    try {
+      localStorage.setItem('4nav_custom_presets_v2', JSON.stringify(presets));
+    } catch (_) {}
+  }
+
+  function applyPreset(preset) {
+    if (!preset) return;
+    const targetScreens = Math.max(1, Math.min(4, Number(preset.screens) || 4));
+    setScreenCount(targetScreens);
+
+    const urls = Array.isArray(preset.urls) ? preset.urls : [];
+    for (let i = 0; i < targetScreens; i++) {
+      const url = urls[i];
+      if (quadrants[i] && url && url !== 'about:blank') {
+        quadrants[i].navigateTo(url);
+      }
+    }
+
+    if (optionsMenu) optionsMenu.classList.add('hidden');
+    if (customPresetModal) customPresetModal.classList.add('hidden');
+    showToast(`Preset "${preset.name || 'Personalizado'}" carregado com sucesso (${targetScreens} tela${targetScreens > 1 ? 's' : ''})!`);
+  }
+
+  function setFormScreenCount(count) {
+    formSelectedScreens = Math.max(1, Math.min(4, Number(count) || 4));
+    presetScreenOptBtns.forEach(btn => {
+      const sc = Number(btn.getAttribute('data-screens')) || 4;
+      btn.classList.toggle('active', sc === formSelectedScreens);
+    });
+    slotFieldEls.forEach((field, idx) => {
+      if (field) {
+        field.classList.toggle('disabled', idx >= formSelectedScreens);
       }
     });
-    updateGridLayout();
-    if (optionsMenu) optionsMenu.classList.add('hidden');
   }
 
-  // Built-in presets clicks
-  if (optionsMenu) {
-    optionsMenu.querySelectorAll('[data-preset]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const key = btn.getAttribute('data-preset');
-        const list = PRESETS[key];
-        if (list) {
-          loadPreset(list);
-          showToast(`Preset carregado com sucesso!`);
+  function resetPresetForm() {
+    if (presetEditIdInput) presetEditIdInput.value = '';
+    if (presetFormModeTitle) presetFormModeTitle.textContent = '➕ Criar Novo Preset';
+    if (presetNameInput) presetNameInput.value = '';
+    if (btnCancelPresetForm) btnCancelPresetForm.classList.add('hidden');
+    presetUrlInputs.forEach(inp => { if (inp) inp.value = ''; });
+    setFormScreenCount(4);
+  }
+
+  function autofillCurrentScreens() {
+    const openQuads = quadrants.filter(q => !q.isClosed);
+    const count = Math.max(1, Math.min(4, openQuads.length || 4));
+    setFormScreenCount(count);
+
+    quadrants.forEach((q, idx) => {
+      if (presetUrlInputs[idx]) {
+        if (!q.isClosed) {
+          const url = (q.webview && q.webview.getURL ? q.webview.getURL() : '') || (q.urlInput ? q.urlInput.value : '');
+          presetUrlInputs[idx].value = (url && url !== 'about:blank') ? url : '';
+        } else {
+          presetUrlInputs[idx].value = '';
         }
-      });
+      }
     });
   }
 
-  // Custom Preset: Save
-  const btnSaveCustomPreset = document.getElementById('btn-save-custom-preset');
-  if (btnSaveCustomPreset) {
-    btnSaveCustomPreset.addEventListener('click', () => {
-      const currentUrls = quadrants.map(q => q.webview.getURL() || q.urlInput.value || '');
-      localStorage.setItem('4nav_custom_preset', JSON.stringify(currentUrls));
+  function openPresetModal() {
+    if (customPresetModal) {
+      renderPresetsUI();
+      customPresetModal.classList.remove('hidden');
+    }
+  }
+
+  function closePresetModal() {
+    if (customPresetModal) {
+      customPresetModal.classList.add('hidden');
+      resetPresetForm();
+    }
+  }
+
+  function editPreset(p) {
+    if (!p) return;
+    if (presetEditIdInput) presetEditIdInput.value = p.id;
+    if (presetFormModeTitle) presetFormModeTitle.textContent = `✏️ Editar Preset: ${p.name}`;
+    if (presetNameInput) {
+      presetNameInput.value = p.name;
+      presetNameInput.focus();
+    }
+    if (btnCancelPresetForm) btnCancelPresetForm.classList.remove('hidden');
+
+    const screens = Math.max(1, Math.min(4, Number(p.screens) || 4));
+    setFormScreenCount(screens);
+
+    const urls = Array.isArray(p.urls) ? p.urls : [];
+    for (let i = 0; i < 4; i++) {
+      if (presetUrlInputs[i]) {
+        presetUrlInputs[i].value = urls[i] || '';
+      }
+    }
+
+    const formSection = document.getElementById('preset-form-section');
+    if (formSection) {
+      formSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+
+  function deletePreset(id, name) {
+    if (!confirm(`Deseja realmente excluir o preset "${name}"?`)) return;
+    const presets = getUserPresets().filter(p => p.id !== id);
+    saveUserPresets(presets);
+    if (presetEditIdInput && presetEditIdInput.value === id) {
+      resetPresetForm();
+    }
+    renderPresetsUI();
+    showToast(`🗑️ Preset "${name}" excluído.`);
+  }
+
+  function renderPresetsUI() {
+    const presets = getUserPresets();
+
+    // 1. Render in Options Menu dropdown
+    if (optionsPresetsList) {
+      if (presets.length === 0) {
+        optionsPresetsList.innerHTML = `
+          <div class="preset-empty-hint">
+            Nenhum preset personalizado ainda.<br>Clique em <strong>Salvar Telas Atuais</strong> para criar seu primeiro preset.
+          </div>
+        `;
+      } else {
+        optionsPresetsList.innerHTML = '';
+        presets.forEach(p => {
+          const btn = document.createElement('button');
+          btn.className = 'preset-chip-item';
+          btn.title = `Carregar preset "${p.name}" (${p.screens || 4} Telas)`;
+          btn.innerHTML = `
+            <div class="preset-chip-meta">
+              <span>🎮</span>
+              <span class="preset-chip-name">${escapeHtml(p.name)}</span>
+            </div>
+            <span class="preset-badge-screens">${p.screens || 4} Telas</span>
+          `;
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            applyPreset(p);
+          });
+          optionsPresetsList.appendChild(btn);
+        });
+      }
+    }
+
+    // 2. Render in Modal List
+    if (presetTotalBadge) {
+      presetTotalBadge.textContent = `${presets.length} salvo${presets.length === 1 ? '' : 's'}`;
+    }
+
+    if (modalPresetsList) {
+      if (presets.length === 0) {
+        modalPresetsList.innerHTML = `
+          <div class="preset-empty-hint" style="padding: 24px;">
+            🎮 Nenhum preset salvo ainda. Use o formulário acima ou clique em "Copiar Telas Abertas" para criar o seu primeiro preset de jogos!
+          </div>
+        `;
+      } else {
+        modalPresetsList.innerHTML = '';
+        presets.forEach(p => {
+          const item = document.createElement('div');
+          item.className = 'modal-preset-item';
+
+          const validUrls = (p.urls || []).slice(0, p.screens || 4).filter(u => u && u !== 'about:blank');
+          const urlsHtml = validUrls.map(u => `<span class="preset-url-chip" title="${escapeHtml(u)}">${escapeHtml(u)}</span>`).join('') || '<span class="preset-url-chip" style="opacity:0.5;">(Sem URLs)</span>';
+
+          item.innerHTML = `
+            <div class="modal-preset-info">
+              <div class="modal-preset-title-row">
+                <span class="modal-preset-name">${escapeHtml(p.name)}</span>
+                <span class="preset-badge-screens">${p.screens || 4} Telas</span>
+              </div>
+              <div class="modal-preset-urls-preview">
+                ${urlsHtml}
+              </div>
+            </div>
+            <div class="modal-preset-actions">
+              <button class="btn btn-secondary btn-sm btn-apply" title="Aplicar preset no navegador">🚀 Aplicar</button>
+              <button class="btn btn-secondary btn-sm btn-edit" title="Editar este preset">✏️</button>
+              <button class="btn btn-secondary btn-sm btn-delete text-danger" title="Excluir preset">🗑️</button>
+            </div>
+          `;
+
+          item.querySelector('.btn-apply').addEventListener('click', () => {
+            applyPreset(p);
+          });
+
+          item.querySelector('.btn-edit').addEventListener('click', () => {
+            editPreset(p);
+          });
+
+          item.querySelector('.btn-delete').addEventListener('click', () => {
+            deletePreset(p.id, p.name);
+          });
+
+          modalPresetsList.appendChild(item);
+        });
+      }
+    }
+  }
+
+  // Preset listeners & bindings
+  if (btnSaveCurrentPreset) {
+    btnSaveCurrentPreset.addEventListener('click', () => {
       if (optionsMenu) optionsMenu.classList.add('hidden');
-      showToast('💾 Quarteto de jogos atual salvo como seu preset!');
+      resetPresetForm();
+      autofillCurrentScreens();
+      if (presetNameInput) {
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('pt-BR');
+        const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        presetNameInput.value = `Preset ${dateStr} ${timeStr}`;
+      }
+      openPresetModal();
+      if (presetNameInput) {
+        presetNameInput.focus();
+        presetNameInput.select();
+      }
     });
   }
 
-  // Custom Preset: Load
-  const btnLoadCustomPreset = document.getElementById('btn-load-custom-preset');
-  if (btnLoadCustomPreset) {
-    btnLoadCustomPreset.addEventListener('click', () => {
-      const saved = localStorage.getItem('4nav_custom_preset');
-      if (!saved) {
-        showToast('⚠️ Nenhum preset personalizado salvo ainda.');
+  if (btnOpenPresetManager) {
+    btnOpenPresetManager.addEventListener('click', () => {
+      if (optionsMenu) optionsMenu.classList.add('hidden');
+      openPresetModal();
+    });
+  }
+
+  if (btnClosePresetModal) {
+    btnClosePresetModal.addEventListener('click', closePresetModal);
+  }
+
+  if (btnPresetModalClose) {
+    btnPresetModalClose.addEventListener('click', closePresetModal);
+  }
+
+  if (btnAutofillCurrentScreens) {
+    btnAutofillCurrentScreens.addEventListener('click', () => {
+      autofillCurrentScreens();
+      showToast('⚡ URLs e telas abertas copiadas para o formulário!');
+    });
+  }
+
+  presetScreenOptBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const sc = Number(btn.getAttribute('data-screens')) || 4;
+      setFormScreenCount(sc);
+    });
+  });
+
+  if (btnCancelPresetForm) {
+    btnCancelPresetForm.addEventListener('click', () => {
+      resetPresetForm();
+    });
+  }
+
+  if (btnSavePresetSubmit) {
+    btnSavePresetSubmit.addEventListener('click', () => {
+      const name = presetNameInput ? presetNameInput.value.trim() : '';
+      if (!name) {
+        showToast('⚠️ Digite um nome para o seu preset.');
+        if (presetNameInput) presetNameInput.focus();
         return;
       }
-      try {
-        const urls = JSON.parse(saved);
-        loadPreset(urls);
-        showToast('📂 Seu preset personalizado foi carregado com sucesso!');
-      } catch (e) {
-        showToast('❌ Erro ao ler preset salvo.');
+
+      const urls = [];
+      let hasAtLeastOneUrl = false;
+      for (let i = 0; i < formSelectedScreens; i++) {
+        const val = presetUrlInputs[i] ? presetUrlInputs[i].value.trim() : '';
+        urls.push(val);
+        if (val && val !== 'about:blank') {
+          hasAtLeastOneUrl = true;
+        }
       }
+
+      if (!hasAtLeastOneUrl) {
+        showToast('⚠️ Informe ao menos uma URL válida para o preset.');
+        return;
+      }
+
+      const presets = getUserPresets();
+      const editId = presetEditIdInput ? presetEditIdInput.value.trim() : '';
+
+      if (editId) {
+        const existingIdx = presets.findIndex(p => p.id === editId);
+        if (existingIdx !== -1) {
+          presets[existingIdx].name = name;
+          presets[existingIdx].screens = formSelectedScreens;
+          presets[existingIdx].urls = urls;
+          presets[existingIdx].updatedAt = Date.now();
+          showToast(`✅ Preset "${name}" atualizado com sucesso!`);
+        } else {
+          presets.unshift({
+            id: 'preset_' + Date.now(),
+            name,
+            screens: formSelectedScreens,
+            urls,
+            updatedAt: Date.now()
+          });
+          showToast(`✅ Preset "${name}" salvo com sucesso!`);
+        }
+      } else {
+        presets.unshift({
+          id: 'preset_' + Date.now(),
+          name,
+          screens: formSelectedScreens,
+          urls,
+          updatedAt: Date.now()
+        });
+        showToast(`✅ Preset "${name}" salvo com sucesso!`);
+      }
+
+      saveUserPresets(presets);
+      resetPresetForm();
+      renderPresetsUI();
     });
   }
+
+  // Initial render of user presets in options dropdown
+  renderPresetsUI();
 
   // ================= Backup & Restore Saves =================
   btnExportBackup.addEventListener('click', async () => {
@@ -2123,6 +2424,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Escape') {
       if (optionsMenu && !optionsMenu.classList.contains('hidden')) {
         closeAllDropdowns();
+        return;
+      }
+      if (customPresetModal && !customPresetModal.classList.contains('hidden')) {
+        closePresetModal();
         return;
       }
       const bookmarkModal = document.getElementById('bookmark-modal');
