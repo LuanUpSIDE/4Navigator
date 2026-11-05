@@ -86,6 +86,84 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // ================= Smart FPS & Background Sleeping Tabs State =================
+  let smartFpsEnabled = localStorage.getItem('4nav_smart_fps') !== 'false';
+
+  function applySmartFpsThrottleToQuadrant(quad, targetFps) {
+    if (!quad || quad.isClosed || !quad.webview) return;
+    try {
+      quad.webview.executeJavaScript(`
+        (function(fps) {
+          if (!window.__4navRafThrottlerInstalled) {
+            window.__4navRafThrottlerInstalled = true;
+            const originalRaf = window.requestAnimationFrame.bind(window);
+            window.__4navTargetInterval = 0;
+            window.__4navLastFrameTime = 0;
+
+            window.__set4NavRenderThrottle = function(target) {
+              if (!target || target <= 0 || target >= 60) {
+                window.__4navTargetInterval = 0;
+              } else {
+                window.__4navTargetInterval = 1000 / target;
+              }
+            };
+
+            window.requestAnimationFrame = function(callback) {
+              if (window.__4navTargetInterval <= 0) {
+                return originalRaf(callback);
+              }
+              return originalRaf(function(timestamp) {
+                const elapsed = timestamp - window.__4navLastFrameTime;
+                if (elapsed < window.__4navTargetInterval) {
+                  window.requestAnimationFrame(callback);
+                } else {
+                  window.__4navLastFrameTime = timestamp - (elapsed % window.__4navTargetInterval);
+                  callback(timestamp);
+                }
+              });
+            };
+          }
+
+          if (window.__set4NavRenderThrottle) {
+            window.__set4NavRenderThrottle(fps);
+          }
+        })(${targetFps});
+      `).catch(() => {});
+    } catch (_) {}
+  }
+
+  function updateSmartFpsThrottling() {
+    const statusTextEl = document.getElementById('smart-fps-status-text');
+    if (!smartFpsEnabled) {
+      quadrants.forEach(q => applySmartFpsThrottleToQuadrant(q, 0));
+      if (statusTextEl) {
+        statusTextEl.textContent = '⚪ Smart FPS: Desativado (60 FPS Contínuo)';
+      }
+      return;
+    }
+
+    const isWindowFocused = document.hasFocus();
+    if (!isWindowFocused) {
+      // Window in background: throttle all open quadrants to 5 FPS (extreme GPU saving)
+      quadrants.forEach(q => applySmartFpsThrottleToQuadrant(q, 5));
+      if (statusTextEl) {
+        statusTextEl.textContent = '💤 Smart FPS: Janela em 2º plano (Todos os painéis a 5 FPS)';
+      }
+    } else {
+      // Window focused: active quadrant at 60 FPS, background quadrants at 10 FPS
+      quadrants.forEach(q => {
+        if (q.id === lastFocusedQuadId) {
+          applySmartFpsThrottleToQuadrant(q, 0);
+        } else {
+          applySmartFpsThrottleToQuadrant(q, 10);
+        }
+      });
+      if (statusTextEl) {
+        statusTextEl.textContent = `🟢 Smart FPS: Ativo (Painel ${lastFocusedQuadId} a 60 FPS, outros a 10 FPS)`;
+      }
+    }
+  }
+
   // Initialize Quadrants 1 through 4
   for (let id = 1; id <= 4; id++) {
     const el = document.getElementById(`quadrant-${id}`);
@@ -100,6 +178,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnForward = el.querySelector('.btn-forward');
     const btnReload = el.querySelector('.btn-reload');
     const btnMute = el.querySelector('.btn-mute');
+    const volumeSlider = el.querySelector('.volume-slider');
+    const volumeLevelEl = el.querySelector('.volume-level');
     const btnBookmark = el.querySelector('.btn-bookmark');
     const btnCredentials = el.querySelector('.btn-credentials');
     const btnAutoclick = el.querySelector('.btn-autoclick');
@@ -118,8 +198,18 @@ document.addEventListener('DOMContentLoaded', () => {
     let autoClickerInterval = null;
     let clickCoords = { x: 200, y: 200 };
 
-    el.addEventListener('focusin', () => { lastFocusedQuadId = id; });
-    el.addEventListener('mousedown', () => { lastFocusedQuadId = id; });
+    let savedVol = parseInt(localStorage.getItem(`4nav_volume_quad_${id}`) || '100', 10);
+    if (isNaN(savedVol) || savedVol < 0 || savedVol > 200) savedVol = 100;
+
+    const handleQuadFocus = () => {
+      if (lastFocusedQuadId !== id) {
+        lastFocusedQuadId = id;
+        updateSmartFpsThrottling();
+      }
+    };
+    el.addEventListener('focusin', handleQuadFocus);
+    el.addEventListener('mousedown', handleQuadFocus);
+    el.addEventListener('mouseenter', handleQuadFocus);
 
     // Track coordinates inside webview wrapper
     webviewWrapper.addEventListener('mousemove', (e) => {
@@ -209,20 +299,96 @@ document.addEventListener('DOMContentLoaded', () => {
         updateQuadrantSecurityShield(this, finalUrl);
         if (emptyState) emptyState.classList.add('hidden');
       },
-      setMuted(muted) {
-        webview.setAudioMuted(muted);
-        if (muted) {
+      volume: savedVol,
+      setVolume(volPercent, syncSlider = true) {
+        this.volume = Math.max(0, Math.min(200, Number(volPercent) || 0));
+        if (syncSlider && volumeSlider) {
+          volumeSlider.value = this.volume;
+        }
+        if (volumeLevelEl) {
+          volumeLevelEl.textContent = `${this.volume}%`;
+          volumeLevelEl.classList.toggle('boosted', this.volume > 100);
+        }
+        localStorage.setItem(`4nav_volume_quad_${id}`, this.volume);
+
+        if (this.volume === 0) {
+          this.setMuted(true);
+        } else {
+          if (this.isMuted()) {
+            this.setMuted(false);
+          } else {
+            this.updateMuteIcon();
+          }
+          this.applyAudioGainToWebview();
+        }
+      },
+      updateMuteIcon() {
+        if (this.isMuted()) {
           btnMute.textContent = '🔇';
           btnMute.classList.add('active-mute');
           btnMute.title = 'Desmutar este jogo';
         } else {
-          btnMute.textContent = '🔊';
           btnMute.classList.remove('active-mute');
           btnMute.title = 'Mutar este jogo';
+          if (this.volume > 100) {
+            btnMute.textContent = '📢';
+          } else if (this.volume > 40) {
+            btnMute.textContent = '🔊';
+          } else {
+            btnMute.textContent = '🔉';
+          }
         }
+      },
+      setMuted(muted) {
+        webview.setAudioMuted(muted);
+        this.updateMuteIcon();
+        this.applyAudioGainToWebview();
       },
       isMuted() {
         return webview.isAudioMuted();
+      },
+      applyAudioGainToWebview() {
+        const gainFactor = this.isMuted() ? 0 : (this.volume / 100);
+        try {
+          webview.executeJavaScript(`
+            (function(gain) {
+              try {
+                // 1. Regular media elements (volume 0.0 to 1.0)
+                const normVol = Math.min(1.0, Math.max(0.0, gain));
+                document.querySelectorAll('audio, video').forEach(m => {
+                  try { m.volume = normVol; } catch (_) {}
+                });
+
+                // 2. Web Audio API Master Gain
+                if (!window.__4navAudioCtx && (window.AudioContext || window.webkitAudioContext)) {
+                  const Ctx = window.AudioContext || window.webkitAudioContext;
+                  window.__4navAudioCtx = new Ctx();
+                  window.__4navGainNode = window.__4navAudioCtx.createGain();
+                  window.__4navGainNode.connect(window.__4navAudioCtx.destination);
+                  window.__4navSources = new WeakSet();
+                }
+
+                if (window.__4navGainNode && window.__4navAudioCtx) {
+                  window.__4navGainNode.gain.setValueAtTime(gain, window.__4navAudioCtx.currentTime);
+
+                  document.querySelectorAll('audio, video').forEach(media => {
+                    if (!window.__4navSources.has(media)) {
+                      try {
+                        const src = window.__4navAudioCtx.createMediaElementSource(media);
+                        src.connect(window.__4navGainNode);
+                        window.__4navSources.add(media);
+                      } catch (_) {}
+                    }
+                  });
+
+                  if (window.__4navAudioCtx.state === 'suspended' && gain > 0) {
+                    window.__4navAudioCtx.resume().catch(() => {});
+                  }
+                }
+              } catch (_) {}
+            })(${gainFactor});
+          `).catch(() => {});
+        } catch (_) {}
       },
       reload() {
         webview.reload();
@@ -321,11 +487,31 @@ document.addEventListener('DOMContentLoaded', () => {
       quad.toggleAutoClicker(20);
     });
 
-    // Mute Action
-    btnMute.addEventListener('click', () => {
+    // Volume & Gain Slider Actions (0% to 200%)
+    if (volumeSlider) {
+      volumeSlider.value = savedVol;
+      volumeSlider.addEventListener('input', () => {
+        const val = Number(volumeSlider.value);
+        quad.setVolume(val, false);
+      });
+      volumeSlider.addEventListener('click', (e) => e.stopPropagation());
+      volumeSlider.addEventListener('mousedown', (e) => e.stopPropagation());
+    }
+
+    if (volumeLevelEl) {
+      volumeLevelEl.textContent = `${savedVol}%`;
+      volumeLevelEl.classList.toggle('boosted', savedVol > 100);
+    }
+
+    // Mute / Unmute Button
+    btnMute.addEventListener('click', (e) => {
+      e.stopPropagation();
       const willMute = !quad.isMuted();
       quad.setMuted(willMute);
-      showToast(`Painel ${id}: ${willMute ? 'Áudio Silenciado' : 'Áudio Ativado'}`);
+      if (!willMute && quad.volume === 0) {
+        quad.setVolume(100);
+      }
+      showToast(`Painel ${id}: ${willMute ? 'Áudio Silenciado' : 'Áudio Ativado (' + quad.volume + '%)'}`);
     });
 
     // Zoom Actions
@@ -390,6 +576,10 @@ document.addEventListener('DOMContentLoaded', () => {
         updateCredentialButtons();
         updateQuadrantSecurityShield(quad, webview.getURL());
         resetWatchdogRetry(quad.id);
+        quad.applyAudioGainToWebview();
+        if (smartFpsEnabled) {
+          applySmartFpsThrottleToQuadrant(quad, (quad.id === lastFocusedQuadId && document.hasFocus()) ? 0 : 10);
+        }
       }
     });
 
@@ -401,6 +591,10 @@ document.addEventListener('DOMContentLoaded', () => {
         updateCredentialButtons();
         updateQuadrantSecurityShield(quad, event.url);
         resetWatchdogRetry(quad.id);
+        quad.applyAudioGainToWebview();
+        if (smartFpsEnabled) {
+          applySmartFpsThrottleToQuadrant(quad, (quad.id === lastFocusedQuadId && document.hasFocus()) ? 0 : 10);
+        }
       }
     });
 
@@ -428,6 +622,10 @@ document.addEventListener('DOMContentLoaded', () => {
           } catch (_) {}
         `).catch(() => {});
       }
+      quad.applyAudioGainToWebview();
+      if (smartFpsEnabled) {
+        applySmartFpsThrottleToQuadrant(quad, (quad.id === lastFocusedQuadId && document.hasFocus()) ? 0 : 10);
+      }
     });
 
     // Feature 1: Watchdog did-fail-load handler for network disconnections
@@ -446,6 +644,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
+    quad.setVolume(savedVol, true);
     quadrants.push(quad);
   }
 
@@ -1281,6 +1480,30 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
+
+  // Smart FPS / Background Sleeping Tabs Toggle & Listeners
+  const toggleSmartFps = document.getElementById('toggle-smart-fps');
+  if (toggleSmartFps) {
+    toggleSmartFps.checked = smartFpsEnabled;
+    toggleSmartFps.addEventListener('change', () => {
+      smartFpsEnabled = toggleSmartFps.checked;
+      localStorage.setItem('4nav_smart_fps', smartFpsEnabled);
+      updateSmartFpsThrottling();
+      showToast(smartFpsEnabled 
+        ? '⚡ Smart FPS ativado: painéis em segundo plano rodam a 5-10 FPS' 
+        : '⚡ Smart FPS desativado: todos os painéis em 60 FPS contínuo');
+    });
+  }
+
+  window.addEventListener('focus', () => {
+    updateSmartFpsThrottling();
+  });
+  window.addEventListener('blur', () => {
+    updateSmartFpsThrottling();
+  });
+
+  // Initial update
+  updateSmartFpsThrottling();
 
   // ================= GPU Hardware Acceleration Logic =================
   const toggleGpuAccel = document.getElementById('toggle-gpu-accel');

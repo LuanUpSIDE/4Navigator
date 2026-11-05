@@ -78,6 +78,22 @@
                 </button>
               </div>
               <span class="fps-info-hint">Mantém a progressão contínua com menor consumo de CPU.</span>
+
+              <div class="dropdown-sub-divider" style="margin: 8px 0; border-top: 1px dashed rgba(255,255,255,0.08);"></div>
+
+              <div class="gpu-toggle-row">
+                <div class="gpu-text-desc">
+                  <strong>Smart FPS / Sleeping Tabs</strong>
+                  <span>Reduz para 5-10 FPS em segundo plano sem pausar o jogo</span>
+                </div>
+                <label class="switch-toggle" title="Ligar/Desligar Smart FPS Throttler para economia de GPU">
+                  <input type="checkbox" id="toggle-smart-fps" checked>
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+              <div class="online-watchdog-status" style="margin-top: 6px;">
+                <span id="smart-fps-status-text">🟢 Smart FPS: Ativo (Painéis em 2º plano a 5-10 FPS)</span>
+              </div>
             </div>
 
             <div class="dropdown-divider"></div>
@@ -261,7 +277,11 @@
               <span class="autoclick-badge hidden">20 CPS</span>
               <button class="btn-action btn-credentials" title="Logins & Senhas Salvas deste Jogo">🔑</button>
               <button class="btn-action btn-bookmark" title="Adicionar aos Favoritos">⭐</button>
-              <button class="btn-action btn-mute" title="Mutar/Desmutar este jogo">🔊</button>
+              <div class="volume-group" title="Controle Fino de Volume (0% a 200%)">
+                <button class="btn-action btn-mute" title="Mutar/Desmutar este jogo">🔊</button>
+                <input type="range" class="volume-slider" min="0" max="200" step="5" value="100" title="Ajustar Volume (0% a 200%)">
+                <span class="volume-level" title="Ganho de Áudio">100%</span>
+              </div>
               <div class="zoom-group">
                 <button class="btn-action btn-zoom-out" title="Diminuir Zoom">−</button>
                 <span class="zoom-level">100%</span>
@@ -310,7 +330,11 @@
               <span class="autoclick-badge hidden">20 CPS</span>
               <button class="btn-action btn-credentials" title="Logins & Senhas Salvas deste Jogo">🔑</button>
               <button class="btn-action btn-bookmark" title="Adicionar aos Favoritos">⭐</button>
-              <button class="btn-action btn-mute" title="Mutar/Desmutar este jogo">🔊</button>
+              <div class="volume-group" title="Controle Fino de Volume (0% a 200%)">
+                <button class="btn-action btn-mute" title="Mutar/Desmutar este jogo">🔊</button>
+                <input type="range" class="volume-slider" min="0" max="200" step="5" value="100" title="Ajustar Volume (0% a 200%)">
+                <span class="volume-level" title="Ganho de Áudio">100%</span>
+              </div>
               <div class="zoom-group">
                 <button class="btn-action btn-zoom-out" title="Diminuir Zoom">−</button>
                 <span class="zoom-level">100%</span>
@@ -359,7 +383,11 @@
               <span class="autoclick-badge hidden">20 CPS</span>
               <button class="btn-action btn-credentials" title="Logins & Senhas Salvas deste Jogo">🔑</button>
               <button class="btn-action btn-bookmark" title="Adicionar aos Favoritos">⭐</button>
-              <button class="btn-action btn-mute" title="Mutar/Desmutar este jogo">🔊</button>
+              <div class="volume-group" title="Controle Fino de Volume (0% a 200%)">
+                <button class="btn-action btn-mute" title="Mutar/Desmutar este jogo">🔊</button>
+                <input type="range" class="volume-slider" min="0" max="200" step="5" value="100" title="Ajustar Volume (0% a 200%)">
+                <span class="volume-level" title="Ganho de Áudio">100%</span>
+              </div>
               <div class="zoom-group">
                 <button class="btn-action btn-zoom-out" title="Diminuir Zoom">−</button>
                 <span class="zoom-level">100%</span>
@@ -408,7 +436,11 @@
               <span class="autoclick-badge hidden">20 CPS</span>
               <button class="btn-action btn-credentials" title="Logins & Senhas Salvas deste Jogo">🔑</button>
               <button class="btn-action btn-bookmark" title="Adicionar aos Favoritos">⭐</button>
-              <button class="btn-action btn-mute" title="Mutar/Desmutar este jogo">🔊</button>
+              <div class="volume-group" title="Controle Fino de Volume (0% a 200%)">
+                <button class="btn-action btn-mute" title="Mutar/Desmutar este jogo">🔊</button>
+                <input type="range" class="volume-slider" min="0" max="200" step="5" value="100" title="Ajustar Volume (0% a 200%)">
+                <span class="volume-level" title="Ganho de Áudio">100%</span>
+              </div>
               <div class="zoom-group">
                 <button class="btn-action btn-zoom-out" title="Diminuir Zoom">−</button>
                 <span class="zoom-level">100%</span>
