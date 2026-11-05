@@ -1,7 +1,8 @@
 const { app, BrowserWindow, ipcMain, shell, Menu, clipboard, session } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { autoUpdater } = require('electron-updater');
+
+let autoUpdater = null;
 
 // Storage Directory resolver: Portable vs Installed
 function getStorageDirectory() {
@@ -71,10 +72,6 @@ function getCleanChromeUserAgent() {
 const CLEAN_CHROME_UA = getCleanChromeUserAgent();
 app.userAgentFallback = CLEAN_CHROME_UA;
 
-// Configure autoUpdater
-autoUpdater.autoDownload = false;
-autoUpdater.autoInstallOnAppQuit = true;
-
 // Disable background throttling for idle games to keep progressing at full speed
 app.commandLine.appendSwitch('disable-background-timer-throttling');
 app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
@@ -105,6 +102,21 @@ function createWindow() {
 
   mainWindow.setMenuBarVisibility(false);
   Menu.setApplicationMenu(null);
+
+  if (process.env.CAPTURE_SCREENSHOT_PATH) {
+    mainWindow.webContents.once('did-finish-load', () => {
+      setTimeout(async () => {
+        try {
+          const img = await mainWindow.capturePage();
+          fs.writeFileSync(process.env.CAPTURE_SCREENSHOT_PATH, img.toPNG());
+          console.log('SCREENSHOT_CAPTURED_OK:' + process.env.CAPTURE_SCREENSHOT_PATH);
+        } catch (err) {
+          console.error('CAPTURE_ERROR:', err);
+        }
+        app.quit();
+      }, 2500);
+    });
+  }
 
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 
@@ -487,41 +499,11 @@ ipcMain.handle('updater:open-download-url', async (event, url) => {
   return true;
 });
 
-ipcMain.handle('updater:check', async () => {
-  try {
-    const result = await autoUpdater.checkForUpdates();
-    return { success: true, updateInfo: result?.updateInfo || null, isPortable };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
-});
-
-ipcMain.handle('updater:download', async () => {
-  try {
-    await autoUpdater.downloadUpdate();
-    return { success: true };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
-});
-
-ipcMain.handle('updater:install', () => {
-  autoUpdater.quitAndInstall();
-});
-
-ipcMain.handle('updater:get-current-version', () => {
-  return app.getVersion();
-});
-
 function sendUpdaterStatus(channel, data) {
   if (mainWindow && mainWindow.webContents) {
     mainWindow.webContents.send(channel, data);
   }
 }
-
-autoUpdater.on('checking-for-update', () => {
-  sendUpdaterStatus('updater:status', { state: 'checking' });
-});
 
 function isVersionGreater(v1, v2) {
   if (!v1 || !v2) return false;
@@ -537,66 +519,117 @@ function isVersionGreater(v1, v2) {
   return false;
 }
 
-autoUpdater.on('update-available', (info) => {
-  const currentVer = app.getVersion();
-  if (info && info.version && !isVersionGreater(info.version, currentVer)) {
-    console.log(`[AutoUpdater] Versão remota v${info.version} não é mais recente que a atual v${currentVer}. Nenhuma notificação de atualização necessária.`);
-    sendUpdaterStatus('updater:status', {
-      state: 'not-available',
-      version: currentVer
-    });
-    return;
+function initAutoUpdater() {
+  if (autoUpdater) return autoUpdater;
+  try {
+    const updaterModule = require('electron-updater');
+    autoUpdater = updaterModule.autoUpdater;
+    if (autoUpdater) {
+      autoUpdater.autoDownload = false;
+      autoUpdater.autoInstallOnAppQuit = true;
+
+      autoUpdater.on('checking-for-update', () => {
+        sendUpdaterStatus('updater:status', { state: 'checking' });
+      });
+
+      autoUpdater.on('update-available', (info) => {
+        const currentVer = app.getVersion();
+        if (info && info.version && !isVersionGreater(info.version, currentVer)) {
+          sendUpdaterStatus('updater:status', {
+            state: 'not-available',
+            version: currentVer
+          });
+          return;
+        }
+
+        sendUpdaterStatus('updater:status', {
+          state: 'available',
+          version: info.version,
+          releaseDate: info.releaseDate,
+          releaseNotes: info.releaseNotes || 'Nova versão com melhorias e correções.',
+          isPortable
+        });
+      });
+
+      autoUpdater.on('update-not-available', (info) => {
+        sendUpdaterStatus('updater:status', {
+          state: 'not-available',
+          version: info?.version || app.getVersion()
+        });
+      });
+
+      autoUpdater.on('error', (err) => {
+        let friendlyMessage = 'Não foi possível verificar atualizações no momento.';
+        const raw = (err?.message || err?.stack || String(err || '')).toLowerCase();
+
+        if (raw.includes('404')) {
+          friendlyMessage = 'Nenhuma versão ou metadados de atualização encontrados no servidor do GitHub.';
+        } else if (raw.includes('net::') || raw.includes('enotfound') || raw.includes('econnrefused')) {
+          friendlyMessage = 'Sem conexão com a internet ou GitHub temporariamente inacessível.';
+        } else if (err?.message) {
+          friendlyMessage = err.message;
+        }
+
+        sendUpdaterStatus('updater:status', {
+          state: 'error',
+          message: friendlyMessage
+        });
+      });
+
+      autoUpdater.on('download-progress', (progressObj) => {
+        sendUpdaterStatus('updater:status', {
+          state: 'downloading',
+          percent: Math.round(progressObj.percent),
+          bytesPerSecond: progressObj.bytesPerSecond,
+          transferred: progressObj.transferred,
+          total: progressObj.total
+        });
+      });
+
+      autoUpdater.on('update-downloaded', (info) => {
+        sendUpdaterStatus('updater:status', {
+          state: 'downloaded',
+          version: info.version
+        });
+      });
+    }
+  } catch (err) {
+    console.log('[AutoUpdater] Info: autoUpdater desativado em ambiente dev.');
   }
+  return autoUpdater;
+}
 
-  sendUpdaterStatus('updater:status', {
-    state: 'available',
-    version: info.version,
-    releaseDate: info.releaseDate,
-    releaseNotes: info.releaseNotes || 'Nova versão com melhorias e correções.',
-    isPortable
-  });
-});
-
-autoUpdater.on('update-not-available', (info) => {
-  sendUpdaterStatus('updater:status', {
-    state: 'not-available',
-    version: info.version
-  });
-});
-
-autoUpdater.on('error', (err) => {
-  let friendlyMessage = 'Não foi possível verificar atualizações no momento.';
-  const raw = (err?.message || err?.stack || String(err || '')).toLowerCase();
-
-  if (raw.includes('404')) {
-    friendlyMessage = 'Nenhuma versão ou metadados de atualização encontrados no servidor do GitHub.';
-  } else if (raw.includes('net::') || raw.includes('enotfound') || raw.includes('econnrefused')) {
-    friendlyMessage = 'Sem conexão com a internet ou GitHub temporariamente inacessível.';
-  } else if (err?.message) {
-    friendlyMessage = err.message;
+ipcMain.handle('updater:check', async () => {
+  const updater = initAutoUpdater();
+  if (!updater) {
+    return { success: false, error: 'Atualizador disponível apenas na versão compilada/instalada.' };
   }
-
-  sendUpdaterStatus('updater:status', {
-    state: 'error',
-    message: friendlyMessage
-  });
+  try {
+    const result = await updater.checkForUpdates();
+    return { success: true, updateInfo: result?.updateInfo || null, isPortable };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
 });
 
-autoUpdater.on('download-progress', (progressObj) => {
-  sendUpdaterStatus('updater:status', {
-    state: 'downloading',
-    percent: Math.round(progressObj.percent),
-    bytesPerSecond: progressObj.bytesPerSecond,
-    transferred: progressObj.transferred,
-    total: progressObj.total
-  });
+ipcMain.handle('updater:download', async () => {
+  const updater = initAutoUpdater();
+  if (!updater) return { success: false, error: 'Atualizador não disponível.' };
+  try {
+    await updater.downloadUpdate();
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
 });
 
-autoUpdater.on('update-downloaded', (info) => {
-  sendUpdaterStatus('updater:status', {
-    state: 'downloaded',
-    version: info.version
-  });
+ipcMain.handle('updater:install', () => {
+  const updater = initAutoUpdater();
+  if (updater) updater.quitAndInstall();
+});
+
+ipcMain.handle('updater:get-current-version', () => {
+  return app.getVersion();
 });
 
 // Native Context Menu (Right-Click) for Webviews & Main Window
