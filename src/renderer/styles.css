@@ -580,15 +580,22 @@ body {
   transition: all 0.25s ease;
 }
 
+/* Closed Quadrant */
+.quadrant.is-closed {
+  display: none !important;
+}
+
+/* 0 Screens (All Closed) */
+.quadrants-grid.layout-screens-0 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* 1 Screen (Solo / Fullscreen) */
 .quadrants-grid.layout-screens-1 {
   grid-template-columns: 1fr;
   grid-template-rows: 1fr;
-}
-.quadrants-grid.layout-screens-1 #quadrant-2,
-.quadrants-grid.layout-screens-1 #quadrant-3,
-.quadrants-grid.layout-screens-1 #quadrant-4 {
-  display: none !important;
 }
 
 /* 2 Screens (Split Side-by-Side) */
@@ -596,21 +603,11 @@ body {
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr;
 }
-.quadrants-grid.layout-screens-2 #quadrant-3,
-.quadrants-grid.layout-screens-2 #quadrant-4 {
-  display: none !important;
-}
 
 /* 3 Screens (1 Main Left + 2 Stacked Right) */
 .quadrants-grid.layout-screens-3 {
   grid-template-columns: 1.25fr 1fr;
   grid-template-rows: 1fr 1fr;
-}
-.quadrants-grid.layout-screens-3 #quadrant-1 {
-  grid-row: span 2;
-}
-.quadrants-grid.layout-screens-3 #quadrant-4 {
-  display: none !important;
 }
 
 /* 4 Screens (Classic 2x2 Grid) */
@@ -618,6 +615,48 @@ body {
 .quadrants-grid.layout-2x2 {
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
+}
+
+/* Placeholder when all screens are closed */
+.quadrants-all-closed-placeholder {
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: #05070d;
+}
+
+.empty-workspace-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 36px 48px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+.empty-workspace-card .empty-icon {
+  font-size: 42px;
+}
+
+.empty-workspace-card h3 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--text-primary);
+}
+
+.empty-workspace-card p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  max-width: 340px;
 }
 
 /* ================= Individual Quadrant ================= */
@@ -808,6 +847,30 @@ body {
   color: var(--accent-rose);
   background: rgba(244, 63, 94, 0.15);
   border-color: rgba(244, 63, 94, 0.3);
+}
+
+/* Close Quadrant Action */
+.btn-action.btn-close-quadrant {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+.btn-action.btn-close-quadrant:hover {
+  background: rgba(239, 68, 68, 0.25) !important;
+  color: #ef4444 !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+}
+
+/* Home Button in Toolbar Navigation */
+.btn-nav.btn-home {
+  font-size: 13px;
+  margin-right: 2px;
+}
+
+.btn-nav.btn-home:hover {
+  color: var(--accent-cyan);
 }
 
 .zoom-group {

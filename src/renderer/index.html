@@ -210,6 +210,9 @@
 
         <!-- Global Operations -->
         <div class="quick-batch-tools">
+          <button id="btn-global-home" class="btn btn-secondary" title="Retornar todos os painéis à tela inicial">
+            <span>🏠</span> Início Tudo
+          </button>
           <button id="btn-global-mute" class="btn btn-secondary" title="Silenciar/Ativar áudio de todas as telas">
             <span id="global-mute-icon">🔊</span> Silenciar Tudo
           </button>
@@ -247,6 +250,7 @@
         <section class="quadrant" id="quadrant-1" data-id="1">
           <div class="quadrant-toolbar">
             <span class="slot-badge slot-1">P1</span>
+            <button class="btn-nav btn-home" title="Início / Tela Inicial">🏠</button>
             <button class="btn-nav btn-back" title="Voltar">‹</button>
             <button class="btn-nav btn-forward" title="Avançar">›</button>
             <button class="btn-nav btn-reload" title="Recarregar">↻</button>
@@ -271,6 +275,7 @@
               </div>
               <button class="btn-action btn-devtools" title="Abrir Console/DevTools">🛠️</button>
               <button class="btn-action btn-expand" title="Maximizar este quadrante">⤢</button>
+              <button class="btn-action btn-close-quadrant" title="Fechar este painel">✕</button>
             </div>
           </div>
           <div class="webview-wrapper">
@@ -294,6 +299,7 @@
         <section class="quadrant" id="quadrant-2" data-id="2">
           <div class="quadrant-toolbar">
             <span class="slot-badge slot-2">P2</span>
+            <button class="btn-nav btn-home" title="Início / Tela Inicial">🏠</button>
             <button class="btn-nav btn-back" title="Voltar">‹</button>
             <button class="btn-nav btn-forward" title="Avançar">›</button>
             <button class="btn-nav btn-reload" title="Recarregar">↻</button>
@@ -318,6 +324,7 @@
               </div>
               <button class="btn-action btn-devtools" title="Abrir Console/DevTools">🛠️</button>
               <button class="btn-action btn-expand" title="Maximizar este quadrante">⤢</button>
+              <button class="btn-action btn-close-quadrant" title="Fechar este painel">✕</button>
             </div>
           </div>
           <div class="webview-wrapper">
@@ -341,6 +348,7 @@
         <section class="quadrant" id="quadrant-3" data-id="3">
           <div class="quadrant-toolbar">
             <span class="slot-badge slot-3">P3</span>
+            <button class="btn-nav btn-home" title="Início / Tela Inicial">🏠</button>
             <button class="btn-nav btn-back" title="Voltar">‹</button>
             <button class="btn-nav btn-forward" title="Avançar">›</button>
             <button class="btn-nav btn-reload" title="Recarregar">↻</button>
@@ -365,6 +373,7 @@
               </div>
               <button class="btn-action btn-devtools" title="Abrir Console/DevTools">🛠️</button>
               <button class="btn-action btn-expand" title="Maximizar este quadrante">⤢</button>
+              <button class="btn-action btn-close-quadrant" title="Fechar este painel">✕</button>
             </div>
           </div>
           <div class="webview-wrapper">
@@ -388,6 +397,7 @@
         <section class="quadrant" id="quadrant-4" data-id="4">
           <div class="quadrant-toolbar">
             <span class="slot-badge slot-4">P4</span>
+            <button class="btn-nav btn-home" title="Início / Tela Inicial">🏠</button>
             <button class="btn-nav btn-back" title="Voltar">‹</button>
             <button class="btn-nav btn-forward" title="Avançar">›</button>
             <button class="btn-nav btn-reload" title="Recarregar">↻</button>
@@ -412,6 +422,7 @@
               </div>
               <button class="btn-action btn-devtools" title="Abrir Console/DevTools">🛠️</button>
               <button class="btn-action btn-expand" title="Maximizar este quadrante">⤢</button>
+              <button class="btn-action btn-close-quadrant" title="Fechar este painel">✕</button>
             </div>
           </div>
           <div class="webview-wrapper">
@@ -430,6 +441,16 @@
             </div>
           </div>
         </section>
+        
+        <!-- Empty Workspace Placeholder (Visible when all panels are closed) -->
+        <div id="quadrants-empty-state" class="quadrants-all-closed-placeholder hidden">
+          <div class="empty-workspace-card">
+            <div class="empty-icon">🎮</div>
+            <h3>Nenhum painel aberto</h3>
+            <p>Todos os painéis foram fechados para economizar 100% de CPU e memória.</p>
+            <button id="btn-reopen-quadrant" class="btn btn-primary">➕ Abrir Painel 1</button>
+          </div>
+        </div>
       </main>
 
       <!-- Retractable Notes Drawer -->
@@ -460,6 +481,7 @@
             <button id="btn-clear-notes" class="btn btn-secondary">Limpar</button>
           </div>
         </div>
+      </aside>
     </div>
 
     <!-- Bottom Resource & RAM HUD -->

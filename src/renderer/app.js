@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function handleWatchdogFailure(quad, errorDesc) {
     if (!onlineSettings.autoReconnect) return;
-    if (!quad || !quad.webview) return;
+    if (!quad || quad.isClosed || !quad.webview) return;
 
     const currentUrl = quad.webview.getURL() || quad.urlInput.value;
     if (!currentUrl || currentUrl === 'about:blank') return;
@@ -116,6 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlInput = el.querySelector('.url-input');
     const urlShield = el.querySelector('.url-shield');
     const btnGo = el.querySelector('.btn-go');
+    const btnHome = el.querySelector('.btn-home');
     const btnBack = el.querySelector('.btn-back');
     const btnForward = el.querySelector('.btn-forward');
     const btnReload = el.querySelector('.btn-reload');
@@ -129,6 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const zoomLevelEl = el.querySelector('.zoom-level');
     const btnDevtools = el.querySelector('.btn-devtools');
     const btnExpand = el.querySelector('.btn-expand');
+    const btnCloseQuadrant = el.querySelector('.btn-close-quadrant');
     const loadingBar = el.querySelector('.loading-bar');
     const emptyState = el.querySelector('.empty-state-overlay');
     const webviewWrapper = el.querySelector('.webview-wrapper');
@@ -157,6 +159,66 @@ document.addEventListener('DOMContentLoaded', () => {
       btnBookmark,
       btnCredentials,
       emptyState,
+      isClosed: false,
+      goHome() {
+        try { webview.stop(); } catch (_) {}
+        webview.src = 'about:blank';
+        urlInput.value = '';
+        if (emptyState) emptyState.classList.remove('hidden');
+        updateQuadrantSecurityShield(this, '');
+        resetWatchdogRetry(id);
+        if (autoClickerInterval) {
+          clearInterval(autoClickerInterval);
+          autoClickerInterval = null;
+          btnAutoclick.classList.remove('active-autoclick');
+          autoclickBadge.classList.add('hidden');
+        }
+        currentZoom = 1.0;
+        try { webview.setZoomFactor(1.0); } catch (_) {}
+        zoomLevelEl.textContent = '100%';
+        updateBookmarkButtons();
+        updateCredentialButtons();
+        showToast(`Painel ${id}: Retornado à Tela Inicial`);
+      },
+      close() {
+        // Really close and stop everything running in this webview
+        try { webview.stop(); } catch (_) {}
+        webview.src = 'about:blank';
+        try { webview.setAudioMuted(true); } catch (_) {}
+        urlInput.value = '';
+        if (emptyState) emptyState.classList.remove('hidden');
+        updateQuadrantSecurityShield(this, '');
+        resetWatchdogRetry(id);
+        if (autoClickerInterval) {
+          clearInterval(autoClickerInterval);
+          autoClickerInterval = null;
+          btnAutoclick.classList.remove('active-autoclick');
+          autoclickBadge.classList.add('hidden');
+        }
+        currentZoom = 1.0;
+        try { webview.setZoomFactor(1.0); } catch (_) {}
+        zoomLevelEl.textContent = '100%';
+
+        if (el.classList.contains('is-maximized')) {
+          el.classList.remove('is-maximized');
+          btnExpand.textContent = '⤢';
+        }
+
+        this.isClosed = true;
+        el.classList.add('is-closed');
+        updateGridLayout();
+        showToast(`Painel ${id} fechado`);
+      },
+      open(targetUrl = null) {
+        this.isClosed = false;
+        el.classList.remove('is-closed');
+        updateGridLayout();
+        if (targetUrl) {
+          this.navigateTo(targetUrl);
+        } else {
+          this.goHome();
+        }
+      },
       navigateTo(url) {
         if (!url) return;
         let finalUrl = url.trim();
@@ -253,6 +315,12 @@ document.addEventListener('DOMContentLoaded', () => {
       quad.reload();
     });
 
+    if (btnHome) {
+      btnHome.addEventListener('click', () => {
+        quad.goHome();
+      });
+    }
+
     // Bookmark Action for this quadrant
     if (btnBookmark) {
       btnBookmark.addEventListener('click', () => {
@@ -312,6 +380,12 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast(`Painel ${id} maximizado (clique em ⤡ para restaurar)`);
       }
     });
+
+    if (btnCloseQuadrant) {
+      btnCloseQuadrant.addEventListener('click', () => {
+        quad.close();
+      });
+    }
 
     // Webview Event Listeners
     webview.addEventListener('did-start-loading', () => {
@@ -604,9 +678,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!urls || urls.length === 0) return;
     urls.slice(0, 4).forEach((url, idx) => {
       if (quadrants[idx]) {
+        if (quadrants[idx].isClosed) {
+          quadrants[idx].isClosed = false;
+          quadrants[idx].el.classList.remove('is-closed');
+        }
         quadrants[idx].navigateTo(url);
       }
     });
+    updateGridLayout();
     if (optionsMenu) optionsMenu.classList.add('hidden');
   }
 
@@ -761,30 +840,75 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast('Reiniciando os 4 jogos...');
   });
 
-  // ================= Screen Count Selector (1 to 4 screens) =================
+  // ================= Screen Count Selector & Layout Management =================
+  const btnGlobalHome = document.getElementById('btn-global-home');
+  const quadrantsEmptyState = document.getElementById('quadrants-empty-state');
+  const btnReopenQuadrant = document.getElementById('btn-reopen-quadrant');
+
   let currentScreenCount = Number(localStorage.getItem('4nav_screen_count')) || 4;
 
-  function setScreenCount(count) {
-    currentScreenCount = Math.max(1, Math.min(4, Number(count) || 4));
-    localStorage.setItem('4nav_screen_count', currentScreenCount);
+  function updateGridLayout() {
+    const openQuadrants = quadrants.filter(q => !q.isClosed);
+    const count = openQuadrants.length;
 
-    if (quadrantsViewport) {
-      quadrantsViewport.className = `quadrants-grid layout-screens-${currentScreenCount}`;
-    }
-
-    // Update active button state
-    screenCountBtns.forEach(btn => {
-      const btnScreens = Number(btn.getAttribute('data-screens'));
-      btn.classList.toggle('active', btnScreens === currentScreenCount);
+    // Reset inline grid-row overrides
+    quadrants.forEach(q => {
+      q.el.style.gridRow = '';
+      q.el.style.gridColumn = '';
     });
 
-    // Update HUD slots visibility to match active screen count
-    for (let id = 1; id <= 4; id++) {
-      const slotEl = document.getElementById(`hud-p${id}`);
-      if (slotEl) {
-        slotEl.classList.toggle('hidden', id > currentScreenCount);
-      }
+    if (quadrantsEmptyState) {
+      quadrantsEmptyState.classList.toggle('hidden', count > 0);
     }
+
+    if (count === 0) {
+      if (quadrantsViewport) {
+        quadrantsViewport.className = 'quadrants-grid layout-screens-0';
+      }
+      screenCountBtns.forEach(btn => btn.classList.remove('active'));
+      return;
+    }
+
+    if (quadrantsViewport) {
+      quadrantsViewport.className = `quadrants-grid layout-screens-${count}`;
+    }
+
+    // 3 screens layout: first visible quadrant spans 2 rows
+    if (count === 3 && openQuadrants[0]) {
+      openQuadrants[0].el.style.gridRow = 'span 2';
+    }
+
+    // Update screen count selector buttons (1, 2, 3, 4)
+    screenCountBtns.forEach(btn => {
+      const btnScreens = Number(btn.getAttribute('data-screens'));
+      btn.classList.toggle('active', btnScreens === count);
+    });
+
+    // Update HUD slots visibility
+    quadrants.forEach(q => {
+      const slotEl = document.getElementById(`hud-p${q.id}`);
+      if (slotEl) {
+        slotEl.classList.toggle('hidden', q.isClosed);
+      }
+    });
+
+    localStorage.setItem('4nav_screen_count', count);
+  }
+
+  function setScreenCount(targetCount) {
+    const count = Math.max(1, Math.min(4, Number(targetCount) || 4));
+
+    quadrants.forEach((q, idx) => {
+      if (idx < count) {
+        q.isClosed = false;
+        q.el.classList.remove('is-closed');
+      } else {
+        // Really close excess screens
+        q.close();
+      }
+    });
+
+    updateGridLayout();
 
     const labels = {
       1: '1 Tela Cheia (Solo)',
@@ -792,7 +916,7 @@ document.addEventListener('DOMContentLoaded', () => {
       3: '3 Telas (1 Principal + 2)',
       4: '4 Telas (Grade 2x2)'
     };
-    showToast(`Visualização: ${labels[currentScreenCount]}`);
+    showToast(`Visualização: ${labels[count] || count + ' Telas'}`);
   }
 
   screenCountBtns.forEach(btn => {
@@ -802,8 +926,36 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  if (btnGlobalHome) {
+    btnGlobalHome.addEventListener('click', () => {
+      const active = quadrants.filter(q => !q.isClosed);
+      if (active.length === 0) {
+        setScreenCount(1);
+      } else {
+        active.forEach(q => q.goHome());
+        showToast('Todos os painéis retornaram à tela inicial');
+      }
+    });
+  }
+
+  if (btnReopenQuadrant) {
+    btnReopenQuadrant.addEventListener('click', () => {
+      setScreenCount(1);
+    });
+  }
+
   // Apply initial screen count preference
-  setScreenCount(currentScreenCount);
+  const savedScreenCount = Number(localStorage.getItem('4nav_screen_count')) || 4;
+  quadrants.forEach((q, idx) => {
+    if (idx >= savedScreenCount) {
+      q.isClosed = true;
+      q.el.classList.add('is-closed');
+    } else {
+      q.isClosed = false;
+      q.el.classList.remove('is-closed');
+    }
+  });
+  updateGridLayout();
 
   // Mini-Widget Mode
   btnMiniWidget.addEventListener('click', async () => {
@@ -1059,6 +1211,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const q = quadrants[i];
         const valEl = document.getElementById(`hud-val-${i + 1}`);
         if (!valEl) continue;
+
+        if (q && q.isClosed) {
+          valEl.textContent = 'Fechado';
+          continue;
+        }
 
         let pid = null;
         try {
@@ -1914,7 +2071,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(() => {
     if (!onlineSettings.autoReconnect) return;
     quadrants.forEach(quad => {
-      if (!quad.webview || !quad.webview.getURL() || quad.webview.getURL() === 'about:blank') return;
+      if (quad.isClosed || !quad.webview || !quad.webview.getURL() || quad.webview.getURL() === 'about:blank') return;
       quad.webview.executeJavaScript(`
         (() => {
           try {
@@ -1951,7 +2108,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(() => {
     if (!onlineSettings.keepAlive) return;
     quadrants.forEach(quad => {
-      if (!quad.webview || !quad.webview.getURL() || quad.webview.getURL() === 'about:blank') return;
+      if (quad.isClosed || !quad.webview || !quad.webview.getURL() || quad.webview.getURL() === 'about:blank') return;
       quad.webview.executeJavaScript(`
         try {
           window.dispatchEvent(new Event('focus'));
@@ -2257,7 +2414,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Auto-save session and notes on close or page hide
   window.addEventListener('beforeunload', () => {
-    const currentUrls = quadrants.map(q => q.webview.getURL() || q.urlInput.value || '');
+    const currentUrls = quadrants.map(q => (q.isClosed ? '' : (q.webview.getURL() || q.urlInput.value || '')));
     localStorage.setItem('4nav_last_session', JSON.stringify(currentUrls));
 
     if (window.navigatorAPI?.notes?.saveAll) {
