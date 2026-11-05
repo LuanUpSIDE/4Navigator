@@ -109,12 +109,11 @@ function createWindow() {
         try {
           const img = await mainWindow.capturePage();
           fs.writeFileSync(process.env.CAPTURE_SCREENSHOT_PATH, img.toPNG());
-          console.log('SCREENSHOT_CAPTURED_OK:' + process.env.CAPTURE_SCREENSHOT_PATH);
         } catch (err) {
           console.error('CAPTURE_ERROR:', err);
         }
         app.quit();
-      }, 2500);
+      }, 2000);
     });
   }
 

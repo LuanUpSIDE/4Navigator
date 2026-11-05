@@ -1,6 +1,13 @@
 // 4Navigator — Main Renderer Application Logic
 
 document.addEventListener('DOMContentLoaded', () => {
+  // ================= Universal Lucide Icons Integration =================
+  function getLucideSvg(name, { class: cls = '', style = '' } = {}) {
+    const classAttr = `ui-icon${cls ? ' ' + cls : ''}`;
+    const styleAttr = style ? ` style="${style}"` : '';
+    return `<svg class="${classAttr}"${styleAttr}><use href="#icon-${name}"></use></svg>`;
+  }
+
   const quadrants = [];
   let isGlobalMuted = false;
   let lastFocusedQuadId = 1;
@@ -67,20 +74,20 @@ document.addEventListener('DOMContentLoaded', () => {
     watchdogQuadState.set(quad.id, state);
   }
 
-  // Feature 4: Security Shield & Protocol Indicator (Clean Vector SVG Icons)
+  // Feature 4: Security Shield & Protocol Indicator (Clean Lucide Vector Icons)
   function updateQuadrantSecurityShield(quad, url) {
     if (!quad || !quad.urlShield) return;
     const rawUrl = (url || '').trim().toLowerCase();
     if (rawUrl.startsWith('https://')) {
-      quad.urlShield.innerHTML = '<svg class="ui-icon" style="color:var(--accent-emerald);"><use href="#icon-lock"></use></svg>';
+      quad.urlShield.innerHTML = getLucideSvg('lock', { style: 'color:var(--accent-emerald);' });
       quad.urlShield.className = 'url-shield secure';
       quad.urlShield.title = 'Conexão Segura e Criptografada (HTTPS - SSL/TLS)';
     } else if (rawUrl.startsWith('http://')) {
-      quad.urlShield.innerHTML = '<svg class="ui-icon" style="color:var(--accent-rose);"><use href="#icon-shield-alert"></use></svg>';
+      quad.urlShield.innerHTML = getLucideSvg('shield-alert', { style: 'color:var(--accent-rose);' });
       quad.urlShield.className = 'url-shield insecure';
       quad.urlShield.title = 'Atenção: Conexão NÃO criptografada (HTTP)! Não insira senhas nesta página.';
     } else {
-      quad.urlShield.innerHTML = '<svg class="ui-icon" style="color:var(--text-muted);"><use href="#icon-lock-open"></use></svg>';
+      quad.urlShield.innerHTML = getLucideSvg('unlock', { style: 'color:var(--text-muted);' });
       quad.urlShield.className = 'url-shield neutral';
       quad.urlShield.title = 'Página local ou endereço padrão';
     }
@@ -238,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
       isClosed: false,
       goHome() {
         try { webview.stop(); } catch (_) {}
-        webview.src = 'about:blank';
+        try { webview.loadURL('about:blank').catch(() => {}); } catch (_) { webview.src = 'about:blank'; }
         urlInput.value = '';
         if (emptyState) emptyState.classList.remove('hidden');
         updateQuadrantSecurityShield(this, '');
@@ -259,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
       close() {
         // Really close and stop everything running in this webview
         try { webview.stop(); } catch (_) {}
-        webview.src = 'about:blank';
+        try { webview.loadURL('about:blank').catch(() => {}); } catch (_) { webview.src = 'about:blank'; }
         try { webview.setAudioMuted(true); } catch (_) {}
         urlInput.value = '';
         if (emptyState) emptyState.classList.remove('hidden');
@@ -307,6 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (emptyState) emptyState.classList.add('hidden');
       },
       volume: savedVol,
+      isAudioMutedInternal: false,
       setVolume(volPercent, syncSlider = true) {
         this.volume = Math.max(0, Math.min(200, Number(volPercent) || 0));
         if (syncSlider && volumeSlider) {
@@ -331,33 +339,44 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       updateMuteIcon() {
         if (this.isMuted()) {
-          btnMute.innerHTML = '<svg class="ui-icon" style="color:var(--accent-rose);"><use href="#icon-volume-x"></use></svg>';
+          btnMute.innerHTML = getLucideSvg('volume-x', { style: 'color:var(--accent-rose);' });
           btnMute.classList.add('active-mute');
           btnMute.title = 'Desmutar este jogo';
         } else {
           btnMute.classList.remove('active-mute');
           btnMute.title = 'Mutar este jogo';
           if (this.volume > 100) {
-            btnMute.innerHTML = '<svg class="ui-icon" style="color:var(--accent-amber);"><use href="#icon-volume-boost"></use></svg>';
+            btnMute.innerHTML = getLucideSvg('zap', { style: 'color:var(--accent-amber);' });
           } else if (this.volume > 40) {
-            btnMute.innerHTML = '<svg class="ui-icon"><use href="#icon-volume"></use></svg>';
+            btnMute.innerHTML = getLucideSvg('volume-2');
           } else {
-            btnMute.innerHTML = '<svg class="ui-icon"><use href="#icon-volume-1"></use></svg>';
+            btnMute.innerHTML = getLucideSvg('volume-1');
           }
         }
       },
       setMuted(muted) {
-        webview.setAudioMuted(muted);
+        this.isAudioMutedInternal = Boolean(muted);
+        try {
+          if (typeof webview.setAudioMuted === 'function') {
+            webview.setAudioMuted(this.isAudioMutedInternal);
+          }
+        } catch (_) {}
         this.updateMuteIcon();
         this.applyAudioGainToWebview();
       },
       isMuted() {
-        return webview.isAudioMuted();
+        try {
+          if (typeof webview.isAudioMuted === 'function') {
+            return webview.isAudioMuted();
+          }
+        } catch (_) {}
+        return Boolean(this.isAudioMutedInternal);
       },
       applyAudioGainToWebview() {
         const gainFactor = this.isMuted() ? 0 : (this.volume / 100);
         try {
-          webview.executeJavaScript(`
+          if (typeof webview.executeJavaScript === 'function') {
+            webview.executeJavaScript(`
             (function(gain) {
               try {
                 // 1. Regular media elements (volume 0.0 to 1.0)
@@ -395,6 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
               } catch (_) {}
             })(${gainFactor});
           `).catch(() => {});
+          }
         } catch (_) {}
       },
       reload() {
@@ -547,11 +567,11 @@ document.addEventListener('DOMContentLoaded', () => {
     btnExpand.addEventListener('click', () => {
       const isMax = el.classList.toggle('is-maximized');
       btnExpand.innerHTML = isMax 
-        ? '<svg class="ui-icon"><use href="#icon-restore"></use></svg>' 
-        : '<svg class="ui-icon"><use href="#icon-expand"></use></svg>';
+        ? getLucideSvg('minimize-2') 
+        : getLucideSvg('maximize-2');
       btnExpand.title = isMax ? 'Restaurar grade' : 'Maximizar este quadrante';
       if (isMax) {
-        showToast(`Painel ${id} maximizado (clique em ⤡ para restaurar)`);
+        showToast(`Painel ${id} maximizado`);
       }
     });
 
@@ -703,7 +723,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const removeBtn = document.createElement('span');
       removeBtn.className = 'chip-remove';
-      removeBtn.textContent = '✕';
+      removeBtn.innerHTML = getLucideSvg('x', { style: 'width:10px;height:10px;' });
       removeBtn.title = 'Remover favorito';
       removeBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1054,7 +1074,7 @@ document.addEventListener('DOMContentLoaded', () => {
           btn.title = `Carregar preset "${p.name}" (${p.screens || 4} Telas)`;
           btn.innerHTML = `
             <div class="preset-chip-meta">
-              <span>🎮</span>
+              <span>${getLucideSvg('layout-grid', { style: 'color:var(--accent-cyan);' })}</span>
               <span class="preset-chip-name">${escapeHtml(p.name)}</span>
             </div>
             <span class="preset-badge-screens">${p.screens || 4} Telas</span>
@@ -1077,7 +1097,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (presets.length === 0) {
         modalPresetsList.innerHTML = `
           <div class="preset-empty-hint" style="padding: 24px;">
-            🎮 Nenhum preset salvo ainda. Use o formulário acima ou clique em "Copiar Telas Abertas" para criar o seu primeiro preset de jogos!
+            ${getLucideSvg('layout-grid', { style: 'width:28px;height:28px;margin-bottom:8px;opacity:0.6;' })}<br>
+            Nenhum preset salvo ainda. Use o formulário acima ou clique em "Copiar Telas Abertas" para criar o seu primeiro preset de jogos!
           </div>
         `;
       } else {
@@ -1100,9 +1121,9 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             </div>
             <div class="modal-preset-actions">
-              <button class="btn btn-secondary btn-sm btn-apply" title="Aplicar preset no navegador">🚀 Aplicar</button>
-              <button class="btn btn-secondary btn-sm btn-edit" title="Editar este preset">✏️</button>
-              <button class="btn btn-secondary btn-sm btn-delete text-danger" title="Excluir preset">🗑️</button>
+              <button class="btn btn-secondary btn-sm btn-apply" title="Aplicar preset no navegador">${getLucideSvg('play')} Aplicar</button>
+              <button class="btn btn-secondary btn-sm btn-edit" title="Editar este preset">${getLucideSvg('edit-3')}</button>
+              <button class="btn btn-secondary btn-sm btn-delete text-danger" title="Excluir preset">${getLucideSvg('trash-2')}</button>
             </div>
           `;
 
@@ -1341,7 +1362,7 @@ document.addEventListener('DOMContentLoaded', () => {
     isGlobalMuted = !isGlobalMuted;
     quadrants.forEach(q => q.setMuted(isGlobalMuted));
     btnGlobalMute.innerHTML = `
-      <span id="global-mute-icon"><svg class="ui-icon"><use href="#icon-${isGlobalMuted ? 'volume-x' : 'volume'}"></use></svg></span> 
+      <span id="global-mute-icon">${getLucideSvg(isGlobalMuted ? 'volume-x' : 'volume-2')}</span> 
       <span>${isGlobalMuted ? 'Ativar Áudios' : 'Silenciar Tudo'}</span>
     `;
     showToast(isGlobalMuted ? 'Todos os painéis silenciados' : 'Áudio restaurado em todos os painéis');
@@ -1985,7 +2006,7 @@ document.addEventListener('DOMContentLoaded', () => {
     credUsernameInput.value = '';
     credPasswordInput.value = '';
     credPasswordInput.type = 'password';
-    if (btnToggleCredPass) btnToggleCredPass.textContent = '👁️';
+    if (btnToggleCredPass) btnToggleCredPass.innerHTML = getLucideSvg('eye');
 
     if (domain && window.navigatorAPI?.credentials?.getForUrl) {
       try {
@@ -2022,10 +2043,10 @@ document.addEventListener('DOMContentLoaded', () => {
     btnToggleCredPass.addEventListener('click', () => {
       if (credPasswordInput.type === 'password') {
         credPasswordInput.type = 'text';
-        btnToggleCredPass.textContent = '🔒';
+        btnToggleCredPass.innerHTML = getLucideSvg('eye-off');
       } else {
         credPasswordInput.type = 'password';
-        btnToggleCredPass.textContent = '👁️';
+        btnToggleCredPass.innerHTML = getLucideSvg('eye');
       }
     });
   }
@@ -2153,7 +2174,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const empty = document.createElement('div');
       empty.className = 'vault-empty-state';
       empty.innerHTML = `
-        <span class="vault-empty-icon">🔐</span>
+        <span class="vault-empty-icon">${getLucideSvg('shield-check', { style: 'width:36px;height:36px;opacity:0.6;margin-bottom:8px;' })}</span>
         <strong>Nenhum login salvo encontrado</strong>
         <span>Suas contas e senhas salvas para os jogos aparecerão aqui.</span>
       `;
@@ -2170,19 +2191,19 @@ document.addEventListener('DOMContentLoaded', () => {
       item.innerHTML = `
         <div class="vault-item-info">
           <div class="vault-item-domain">
-            <span>🎮</span> <span>${escapeHtml(cred.domain || 'Site')}</span>
+            <span>${getLucideSvg('layout-grid', { style: 'color:var(--accent-cyan);' })}</span> <span>${escapeHtml(cred.domain || 'Site')}</span>
           </div>
           <div class="vault-item-user">
-            👤 ${escapeHtml(cred.username || 'Sem usuário')}
+            ${getLucideSvg('key', { style: 'color:var(--text-muted);margin-right:4px;' })} ${escapeHtml(cred.username || 'Sem usuário')}
           </div>
           ${dateStr ? `<div class="vault-item-date">Salvo em ${dateStr}</div>` : ''}
         </div>
         <div class="vault-item-actions">
           <button class="btn-vault-action btn-vault-copy" title="Copiar Senha">
-            <span>📋</span> Copiar Senha
+            ${getLucideSvg('copy')} Copiar Senha
           </button>
           <button class="btn-vault-action btn-vault-delete" title="Excluir Login">
-            <span>🗑️</span>
+            ${getLucideSvg('trash-2')}
           </button>
         </div>
       `;
@@ -2192,10 +2213,10 @@ document.addEventListener('DOMContentLoaded', () => {
       btnCopy.addEventListener('click', async () => {
         try {
           await navigator.clipboard.writeText(cred.password);
-          btnCopy.innerHTML = '<span>✅</span> Copiado!';
+          btnCopy.innerHTML = `${getLucideSvg('check')} Copiado!`;
           showToast(`Senha de "${cred.username || cred.domain}" copiada!`);
           setTimeout(() => {
-            btnCopy.innerHTML = '<span>📋</span> Copiar Senha';
+            btnCopy.innerHTML = `${getLucideSvg('copy')} Copiar Senha`;
           }, 2000);
         } catch (_) {
           showToast('Erro ao copiar senha para a área de transferência.');
@@ -2432,7 +2453,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!logs || logs.length === 0) {
       minerLogsContainer.innerHTML = `
         <div class="miner-empty-state">
-          <div class="miner-empty-icon">🛡️✨</div>
+          <div class="miner-empty-icon">${getLucideSvg('shield-check', { style: 'width:36px;height:36px;opacity:0.6;margin-bottom:8px;color:var(--accent-emerald);' })}</div>
           <strong>Nenhuma tentativa de mineração detectada!</strong>
           <p>Seus 4 quadrantes estão monitorados em tempo real. Se algum site tentar rodar scripts de cryptojacking (Coinhive, CryptoLoot, Monero), o bloqueio ocorrerá imediatamente e o alerta será registrado aqui.</p>
         </div>
@@ -2457,7 +2478,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <code>${escapeHtml(item.blockedUrl || '')}</code>
           </div>
           <div class="miner-log-action">
-            <span class="badge-blocked">🛡️ Requisição Neutralizada na Rede</span>
+            <span class="badge-blocked">${getLucideSvg('shield-check', { style: 'color:var(--accent-emerald);margin-right:4px;' })} Requisição Neutralizada na Rede</span>
           </div>
         </div>
       `;

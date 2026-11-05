@@ -38,11 +38,13 @@
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-/* Scalable Clean UI Vector Icons */
-.ui-icon {
-  width: 14px;
-  height: 14px;
-  stroke-width: 2;
+/* Scalable Clean Lucide UI Vector Icons */
+.ui-icon,
+svg.lucide,
+i[data-lucide] {
+  width: 15px;
+  height: 15px;
+  stroke-width: 1.85px;
   stroke: currentColor;
   fill: none;
   stroke-linecap: round;
@@ -54,9 +56,40 @@
 }
 
 .btn:hover .ui-icon,
+.btn:hover svg.lucide,
 .btn-action:hover .ui-icon,
-.btn-nav:hover .ui-icon {
+.btn-action:hover svg.lucide,
+.btn-nav:hover .ui-icon,
+.btn-nav:hover svg.lucide {
   transform: scale(1.1);
+}
+
+.menu-section-icon {
+  margin-right: 6px;
+  opacity: 0.85;
+  color: var(--accent-cyan);
+}
+
+.empty-grid-icon {
+  width: 44px;
+  height: 44px;
+  stroke-width: 1.4px;
+  color: var(--accent-cyan);
+  opacity: 0.6;
+}
+
+.status-indicator-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.status-indicator-dot.online {
+  background: var(--accent-emerald);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
 }
 
 /* Utility Classes */
@@ -173,14 +206,6 @@ body {
   border-color: rgba(56, 189, 248, 0.4);
   color: #fff;
   box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
-}
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.btn:hover {
-  background: #222b40;
-  border-color: #3b4763;
 }
 
 .btn-icon {
@@ -2682,3 +2707,7 @@ body.mini-widget-mode .bookmarks-bar {
 
 
 
+
+/* UX: minimum comfortable hit areas + visible keyboard focus */
+.btn-go, .btn-action, .btn-clean-ram, .btn-toggle-eye { min-width: 26px; min-height: 26px; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }

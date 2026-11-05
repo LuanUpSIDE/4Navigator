@@ -1,6 +1,6 @@
 {
   "name": "4navigator",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Desktop browser designed for simultaneous multi-instance idle gaming without background throttling",
   "main": "src/main.js",
   "homepage": "https://github.com/LuanUpSIDE/4Navigator",
@@ -64,6 +64,7 @@
     "electron-builder": "^26.4.0"
   },
   "dependencies": {
-    "electron-updater": "^6.8.11"
+    "electron-updater": "^6.8.11",
+    "lucide": "^1.69.0"
   }
 }
