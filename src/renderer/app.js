@@ -67,23 +67,29 @@ document.addEventListener('DOMContentLoaded', () => {
     watchdogQuadState.set(quad.id, state);
   }
 
-  // Feature 4: Security Shield & Protocol Indicator
+  // Feature 4: Security Shield & Protocol Indicator (Clean Vector SVG Icons)
   function updateQuadrantSecurityShield(quad, url) {
     if (!quad || !quad.urlShield) return;
     const rawUrl = (url || '').trim().toLowerCase();
     if (rawUrl.startsWith('https://')) {
-      quad.urlShield.textContent = '🔒';
+      quad.urlShield.innerHTML = '<svg class="ui-icon" style="color:var(--accent-emerald);"><use href="#icon-lock"></use></svg>';
       quad.urlShield.className = 'url-shield secure';
       quad.urlShield.title = 'Conexão Segura e Criptografada (HTTPS - SSL/TLS)';
     } else if (rawUrl.startsWith('http://')) {
-      quad.urlShield.textContent = '⚠️';
+      quad.urlShield.innerHTML = '<svg class="ui-icon" style="color:var(--accent-rose);"><use href="#icon-shield-alert"></use></svg>';
       quad.urlShield.className = 'url-shield insecure';
       quad.urlShield.title = 'Atenção: Conexão NÃO criptografada (HTTP)! Não insira senhas nesta página.';
     } else {
-      quad.urlShield.textContent = '🌐';
+      quad.urlShield.innerHTML = '<svg class="ui-icon" style="color:var(--text-muted);"><use href="#icon-lock-open"></use></svg>';
       quad.urlShield.className = 'url-shield neutral';
       quad.urlShield.title = 'Página local ou endereço padrão';
     }
+  }
+
+  function updateActiveQuadFocusRing() {
+    quadrants.forEach(q => {
+      q.el.classList.toggle('active-focus', q.id === lastFocusedQuadId && !q.isClosed);
+    });
   }
 
   // ================= Smart FPS & Background Sleeping Tabs State =================
@@ -205,6 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (lastFocusedQuadId !== id) {
         lastFocusedQuadId = id;
         updateSmartFpsThrottling();
+        updateActiveQuadFocusRing();
       }
     };
     el.addEventListener('focusin', handleQuadFocus);
@@ -324,18 +331,18 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       updateMuteIcon() {
         if (this.isMuted()) {
-          btnMute.textContent = '🔇';
+          btnMute.innerHTML = '<svg class="ui-icon" style="color:var(--accent-rose);"><use href="#icon-volume-x"></use></svg>';
           btnMute.classList.add('active-mute');
           btnMute.title = 'Desmutar este jogo';
         } else {
           btnMute.classList.remove('active-mute');
           btnMute.title = 'Mutar este jogo';
           if (this.volume > 100) {
-            btnMute.textContent = '📢';
+            btnMute.innerHTML = '<svg class="ui-icon" style="color:var(--accent-amber);"><use href="#icon-volume-boost"></use></svg>';
           } else if (this.volume > 40) {
-            btnMute.textContent = '🔊';
+            btnMute.innerHTML = '<svg class="ui-icon"><use href="#icon-volume"></use></svg>';
           } else {
-            btnMute.textContent = '🔉';
+            btnMute.innerHTML = '<svg class="ui-icon"><use href="#icon-volume-1"></use></svg>';
           }
         }
       },
@@ -539,7 +546,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Maximize / Expand single quadrant
     btnExpand.addEventListener('click', () => {
       const isMax = el.classList.toggle('is-maximized');
-      btnExpand.textContent = isMax ? '⤡' : '⤢';
+      btnExpand.innerHTML = isMax 
+        ? '<svg class="ui-icon"><use href="#icon-restore"></use></svg>' 
+        : '<svg class="ui-icon"><use href="#icon-expand"></use></svg>';
       btnExpand.title = isMax ? 'Restaurar grade' : 'Maximizar este quadrante';
       if (isMax) {
         showToast(`Painel ${id} maximizado (clique em ⤡ para restaurar)`);
@@ -647,6 +656,8 @@ document.addEventListener('DOMContentLoaded', () => {
     quad.setVolume(savedVol, true);
     quadrants.push(quad);
   }
+
+  updateActiveQuadFocusRing();
 
   // ================= Bookmarks Logic =================
   const DEFAULT_BOOKMARKS = [
@@ -1329,8 +1340,10 @@ document.addEventListener('DOMContentLoaded', () => {
   btnGlobalMute.addEventListener('click', () => {
     isGlobalMuted = !isGlobalMuted;
     quadrants.forEach(q => q.setMuted(isGlobalMuted));
-    globalMuteIcon.textContent = isGlobalMuted ? '🔇' : '🔊';
-    btnGlobalMute.innerHTML = `${isGlobalMuted ? '🔇' : '🔊'} ${isGlobalMuted ? 'Ativar Áudios' : 'Silenciar Tudo'}`;
+    btnGlobalMute.innerHTML = `
+      <span id="global-mute-icon"><svg class="ui-icon"><use href="#icon-${isGlobalMuted ? 'volume-x' : 'volume'}"></use></svg></span> 
+      <span>${isGlobalMuted ? 'Ativar Áudios' : 'Silenciar Tudo'}</span>
+    `;
     showToast(isGlobalMuted ? 'Todos os painéis silenciados' : 'Áudio restaurado em todos os painéis');
   });
 
@@ -1734,10 +1747,12 @@ document.addEventListener('DOMContentLoaded', () => {
       for (let i = 0; i < 4; i++) {
         const q = quadrants[i];
         const valEl = document.getElementById(`hud-val-${i + 1}`);
+        const meterEl = document.getElementById(`hud-meter-${i + 1}`);
         if (!valEl) continue;
 
         if (q && q.isClosed) {
           valEl.textContent = 'Fechado';
+          if (meterEl) { meterEl.style.width = '0%'; meterEl.className = 'hud-meter-fill'; }
           continue;
         }
 
@@ -1750,11 +1765,18 @@ document.addEventListener('DOMContentLoaded', () => {
           const proc = data.processes.find(p => p.pid === pid);
           if (proc) {
             valEl.textContent = `${proc.memoryMB} MB (${proc.cpuPercent}%)`;
+            if (meterEl) {
+              const pct = Math.min(100, Math.max(10, Math.round((proc.memoryMB / 1000) * 100)));
+              meterEl.style.width = `${pct}%`;
+              meterEl.className = 'hud-meter-fill ' + (proc.memoryMB > 800 ? 'high' : proc.memoryMB > 300 ? 'mid' : '');
+            }
           } else {
             valEl.textContent = (q.webview.src && q.webview.src !== 'about:blank') ? 'Ativo' : 'Ocioso';
+            if (meterEl) { meterEl.style.width = '12%'; meterEl.className = 'hud-meter-fill'; }
           }
         } else {
           valEl.textContent = (q.webview.src && q.webview.src !== 'about:blank') ? 'Ativo' : 'Ocioso';
+          if (meterEl) { meterEl.style.width = '12%'; meterEl.className = 'hud-meter-fill'; }
         }
       }
     } catch (_) {}

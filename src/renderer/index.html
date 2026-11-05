@@ -7,6 +7,37 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <!-- Scalable SVG Sprite System for Modern Clean Vector UI -->
+  <svg class="svg-sprite-defs" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+    <defs>
+      <g id="icon-home" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></g>
+      <g id="icon-arrow-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></g>
+      <g id="icon-arrow-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></g>
+      <g id="icon-reload" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></g>
+      <g id="icon-go" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></g>
+      <g id="icon-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></g>
+      <g id="icon-lock-open" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></g>
+      <g id="icon-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></g>
+      <g id="icon-shield-alert" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></g>
+      <g id="icon-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></g>
+      <g id="icon-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 3-9.5 9.5"/><path d="m15.5 7.5 3 3M17 6l3 3"/></g>
+      <g id="icon-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></g>
+      <g id="icon-volume" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></g>
+      <g id="icon-volume-1" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></g>
+      <g id="icon-volume-x" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="22" x2="16" y1="9" y2="15"/><line x1="16" x2="22" y1="9" y2="15"/></g>
+      <g id="icon-volume-boost" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M16 8l5 8M21 8l-5 8"/><path d="M19 4a12 12 0 0 1 0 16"/></g>
+      <g id="icon-tools" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></g>
+      <g id="icon-expand" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></g>
+      <g id="icon-restore" viewBox="0 0 24 24"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></g>
+      <g id="icon-close" viewBox="0 0 24 24"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></g>
+      <g id="icon-settings" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></g>
+      <g id="icon-pin" viewBox="0 0 24 24"><line x1="12" x2="12" y1="17" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></g>
+      <g id="icon-file-text" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/></g>
+      <g id="icon-maximize-win" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/></g>
+      <g id="icon-activity" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></g>
+      <g id="icon-broom" viewBox="0 0 24 24"><path d="m16 2 6 6-4 4-6-6 4-4Z"/><path d="m9 9-7 7a3 3 0 0 0 4 4l7-7"/></g>
+    </defs>
+  </svg>
   <div class="app-container">
     <!-- Top Global Control Bar -->
     <header class="global-header">
@@ -22,7 +53,7 @@
         <!-- Unified Options & Settings Dropdown -->
         <div class="dropdown-wrapper">
           <button id="btn-options-menu" class="btn btn-secondary" title="Opções e Configurações do Navegador">
-            <span class="icon">⚙️</span> Opções
+            <svg class="ui-icon"><use href="#icon-settings"/></svg> <span>Opções</span>
           </button>
           <div id="options-menu" class="dropdown-menu options-dropdown-menu hidden">
             <!-- Section 1: Presets Personalizados -->
@@ -210,41 +241,41 @@
 
         <!-- Mini-Widget Toggle -->
         <button id="btn-mini-widget" class="btn btn-secondary" title="Alternar Modo Mini-Widget Flutuante (Always-on-Top)">
-          <span class="icon">📌</span> Mini-Widget
+          <svg class="ui-icon"><use href="#icon-pin"/></svg> <span>Mini-Widget</span>
         </button>
 
         <!-- Notes Drawer Toggle -->
         <button id="btn-toggle-notes" class="btn btn-secondary" title="Abrir Bloco de Notas Integrado">
-          <span class="icon">📝</span> Notas
+          <svg class="ui-icon"><use href="#icon-file-text"/></svg> <span>Notas</span>
         </button>
 
         <!-- Global Operations -->
         <div class="quick-batch-tools">
           <button id="btn-global-home" class="btn btn-secondary" title="Retornar todos os painéis à tela inicial">
-            <span>🏠</span> Início Tudo
+            <svg class="ui-icon"><use href="#icon-home"/></svg> <span>Início Tudo</span>
           </button>
           <button id="btn-global-mute" class="btn btn-secondary" title="Silenciar/Ativar áudio de todas as telas">
-            <span id="global-mute-icon">🔊</span> Silenciar Tudo
+            <span id="global-mute-icon"><svg class="ui-icon"><use href="#icon-volume"/></svg></span> <span>Silenciar Tudo</span>
           </button>
           <button id="btn-global-reload" class="btn btn-secondary" title="Recarregar os 4 jogos">
-            <span>🔄</span> Recarregar Tudo
+            <svg class="ui-icon"><use href="#icon-reload"/></svg> <span>Recarregar Tudo</span>
           </button>
           <button id="btn-check-updates" class="btn btn-secondary btn-updater-badge" title="Verificar atualizações do 4Navigator">
-            <span class="icon">🔄</span> <span id="updater-btn-text">Atualizações</span>
+            <svg class="ui-icon"><use href="#icon-reload"/></svg> <span id="updater-btn-text">Atualizações</span>
             <span id="updater-badge-dot" class="updater-dot hidden"></span>
           </button>
         </div>
       </div>
 
       <div class="window-controls">
-        <button id="btn-win-maximize" class="btn btn-icon" title="Alternar Tela Cheia">🗖</button>
+        <button id="btn-win-maximize" class="btn btn-icon" title="Alternar Tela Cheia"><svg class="ui-icon"><use href="#icon-maximize-win"/></svg></button>
       </div>
     </header>
 
     <!-- Bookmarks Bar -->
     <div id="bookmarks-bar" class="bookmarks-bar">
       <div class="bookmarks-label">
-        <span class="bookmark-icon">⭐</span>
+        <span class="bookmark-icon"><svg class="ui-icon" style="color:var(--accent-yellow);"><use href="#icon-star"/></svg></span>
         <span>Favoritos:</span>
       </div>
       <div id="bookmarks-list" class="bookmarks-list">
@@ -260,25 +291,25 @@
         <section class="quadrant" id="quadrant-1" data-id="1">
           <div class="quadrant-toolbar">
             <span class="slot-badge slot-1">P1</span>
-            <button class="btn-nav btn-home" title="Início / Tela Inicial">🏠</button>
-            <button class="btn-nav btn-back" title="Voltar">‹</button>
-            <button class="btn-nav btn-forward" title="Avançar">›</button>
-            <button class="btn-nav btn-reload" title="Recarregar">↻</button>
+            <button class="btn-nav btn-home" title="Início / Tela Inicial"><svg class="ui-icon"><use href="#icon-home"/></svg></button>
+            <button class="btn-nav btn-back" title="Voltar"><svg class="ui-icon"><use href="#icon-arrow-left"/></svg></button>
+            <button class="btn-nav btn-forward" title="Avançar"><svg class="ui-icon"><use href="#icon-arrow-right"/></svg></button>
+            <button class="btn-nav btn-reload" title="Recarregar"><svg class="ui-icon"><use href="#icon-reload"/></svg></button>
             
             <div class="url-input-container">
-              <span class="url-shield secure" title="Conexão Criptografada Segura (HTTPS)">🔒</span>
+              <span class="url-shield secure" title="Conexão Criptografada Segura (HTTPS)"><svg class="ui-icon"><use href="#icon-lock"/></svg></span>
               <input type="text" class="url-input" placeholder="Digite uma URL ou escolha um jogo..." spellcheck="false">
-              <button class="btn-go" title="Navegar">➔</button>
+              <button class="btn-go" title="Navegar"><svg class="ui-icon"><use href="#icon-go"/></svg></button>
             </div>
 
             <div class="quadrant-actions">
-              <button class="btn-action btn-miner-alert hidden" title="Ameaça de Mineração Bloqueada neste painel! Clique para verificar detalhes">🛡️⚠️</button>
-              <button class="btn-action btn-autoclick" title="Auto-Clicker (Clique para Ligar/Desligar)">🎯</button>
+              <button class="btn-action btn-miner-alert hidden" title="Ameaça de Mineração Bloqueada"><svg class="ui-icon"><use href="#icon-shield-alert"/></svg></button>
+              <button class="btn-action btn-autoclick" title="Auto-Clicker (Clique para Ligar/Desligar)"><svg class="ui-icon"><use href="#icon-target"/></svg></button>
               <span class="autoclick-badge hidden">20 CPS</span>
-              <button class="btn-action btn-credentials" title="Logins & Senhas Salvas deste Jogo">🔑</button>
-              <button class="btn-action btn-bookmark" title="Adicionar aos Favoritos">⭐</button>
+              <button class="btn-action btn-credentials" title="Logins & Senhas Salvas deste Jogo"><svg class="ui-icon"><use href="#icon-key"/></svg></button>
+              <button class="btn-action btn-bookmark" title="Adicionar aos Favoritos"><svg class="ui-icon"><use href="#icon-star"/></svg></button>
               <div class="volume-group" title="Controle Fino de Volume (0% a 200%)">
-                <button class="btn-action btn-mute" title="Mutar/Desmutar este jogo">🔊</button>
+                <button class="btn-action btn-mute" title="Mutar/Desmutar este jogo"><svg class="ui-icon"><use href="#icon-volume"/></svg></button>
                 <input type="range" class="volume-slider" min="0" max="200" step="5" value="100" title="Ajustar Volume (0% a 200%)">
                 <span class="volume-level" title="Ganho de Áudio">100%</span>
               </div>
@@ -287,9 +318,9 @@
                 <span class="zoom-level">100%</span>
                 <button class="btn-action btn-zoom-in" title="Aumentar Zoom">+</button>
               </div>
-              <button class="btn-action btn-devtools" title="Abrir Console/DevTools">🛠️</button>
-              <button class="btn-action btn-expand" title="Maximizar este quadrante">⤢</button>
-              <button class="btn-action btn-close-quadrant" title="Fechar este painel">✕</button>
+              <button class="btn-action btn-devtools" title="Abrir Console/DevTools"><svg class="ui-icon"><use href="#icon-tools"/></svg></button>
+              <button class="btn-action btn-expand" title="Maximizar este quadrante"><svg class="ui-icon"><use href="#icon-expand"/></svg></button>
+              <button class="btn-action btn-close-quadrant" title="Fechar este painel"><svg class="ui-icon"><use href="#icon-close"/></svg></button>
             </div>
           </div>
           <div class="webview-wrapper">
@@ -313,25 +344,25 @@
         <section class="quadrant" id="quadrant-2" data-id="2">
           <div class="quadrant-toolbar">
             <span class="slot-badge slot-2">P2</span>
-            <button class="btn-nav btn-home" title="Início / Tela Inicial">🏠</button>
-            <button class="btn-nav btn-back" title="Voltar">‹</button>
-            <button class="btn-nav btn-forward" title="Avançar">›</button>
-            <button class="btn-nav btn-reload" title="Recarregar">↻</button>
+            <button class="btn-nav btn-home" title="Início / Tela Inicial"><svg class="ui-icon"><use href="#icon-home"/></svg></button>
+            <button class="btn-nav btn-back" title="Voltar"><svg class="ui-icon"><use href="#icon-arrow-left"/></svg></button>
+            <button class="btn-nav btn-forward" title="Avançar"><svg class="ui-icon"><use href="#icon-arrow-right"/></svg></button>
+            <button class="btn-nav btn-reload" title="Recarregar"><svg class="ui-icon"><use href="#icon-reload"/></svg></button>
             
             <div class="url-input-container">
-              <span class="url-shield secure" title="Conexão Criptografada Segura (HTTPS)">🔒</span>
+              <span class="url-shield secure" title="Conexão Criptografada Segura (HTTPS)"><svg class="ui-icon"><use href="#icon-lock"/></svg></span>
               <input type="text" class="url-input" placeholder="Digite uma URL ou escolha um jogo..." spellcheck="false">
-              <button class="btn-go" title="Navegar">➔</button>
+              <button class="btn-go" title="Navegar"><svg class="ui-icon"><use href="#icon-go"/></svg></button>
             </div>
 
             <div class="quadrant-actions">
-              <button class="btn-action btn-miner-alert hidden" title="Ameaça de Mineração Bloqueada neste painel! Clique para verificar detalhes">🛡️⚠️</button>
-              <button class="btn-action btn-autoclick" title="Auto-Clicker (Clique para Ligar/Desligar)">🎯</button>
+              <button class="btn-action btn-miner-alert hidden" title="Ameaça de Mineração Bloqueada"><svg class="ui-icon"><use href="#icon-shield-alert"/></svg></button>
+              <button class="btn-action btn-autoclick" title="Auto-Clicker (Clique para Ligar/Desligar)"><svg class="ui-icon"><use href="#icon-target"/></svg></button>
               <span class="autoclick-badge hidden">20 CPS</span>
-              <button class="btn-action btn-credentials" title="Logins & Senhas Salvas deste Jogo">🔑</button>
-              <button class="btn-action btn-bookmark" title="Adicionar aos Favoritos">⭐</button>
+              <button class="btn-action btn-credentials" title="Logins & Senhas Salvas deste Jogo"><svg class="ui-icon"><use href="#icon-key"/></svg></button>
+              <button class="btn-action btn-bookmark" title="Adicionar aos Favoritos"><svg class="ui-icon"><use href="#icon-star"/></svg></button>
               <div class="volume-group" title="Controle Fino de Volume (0% a 200%)">
-                <button class="btn-action btn-mute" title="Mutar/Desmutar este jogo">🔊</button>
+                <button class="btn-action btn-mute" title="Mutar/Desmutar este jogo"><svg class="ui-icon"><use href="#icon-volume"/></svg></button>
                 <input type="range" class="volume-slider" min="0" max="200" step="5" value="100" title="Ajustar Volume (0% a 200%)">
                 <span class="volume-level" title="Ganho de Áudio">100%</span>
               </div>
@@ -340,9 +371,9 @@
                 <span class="zoom-level">100%</span>
                 <button class="btn-action btn-zoom-in" title="Aumentar Zoom">+</button>
               </div>
-              <button class="btn-action btn-devtools" title="Abrir Console/DevTools">🛠️</button>
-              <button class="btn-action btn-expand" title="Maximizar este quadrante">⤢</button>
-              <button class="btn-action btn-close-quadrant" title="Fechar este painel">✕</button>
+              <button class="btn-action btn-devtools" title="Abrir Console/DevTools"><svg class="ui-icon"><use href="#icon-tools"/></svg></button>
+              <button class="btn-action btn-expand" title="Maximizar este quadrante"><svg class="ui-icon"><use href="#icon-expand"/></svg></button>
+              <button class="btn-action btn-close-quadrant" title="Fechar este painel"><svg class="ui-icon"><use href="#icon-close"/></svg></button>
             </div>
           </div>
           <div class="webview-wrapper">
@@ -366,25 +397,25 @@
         <section class="quadrant" id="quadrant-3" data-id="3">
           <div class="quadrant-toolbar">
             <span class="slot-badge slot-3">P3</span>
-            <button class="btn-nav btn-home" title="Início / Tela Inicial">🏠</button>
-            <button class="btn-nav btn-back" title="Voltar">‹</button>
-            <button class="btn-nav btn-forward" title="Avançar">›</button>
-            <button class="btn-nav btn-reload" title="Recarregar">↻</button>
+            <button class="btn-nav btn-home" title="Início / Tela Inicial"><svg class="ui-icon"><use href="#icon-home"/></svg></button>
+            <button class="btn-nav btn-back" title="Voltar"><svg class="ui-icon"><use href="#icon-arrow-left"/></svg></button>
+            <button class="btn-nav btn-forward" title="Avançar"><svg class="ui-icon"><use href="#icon-arrow-right"/></svg></button>
+            <button class="btn-nav btn-reload" title="Recarregar"><svg class="ui-icon"><use href="#icon-reload"/></svg></button>
             
             <div class="url-input-container">
-              <span class="url-shield secure" title="Conexão Criptografada Segura (HTTPS)">🔒</span>
+              <span class="url-shield secure" title="Conexão Criptografada Segura (HTTPS)"><svg class="ui-icon"><use href="#icon-lock"/></svg></span>
               <input type="text" class="url-input" placeholder="Digite uma URL ou escolha um jogo..." spellcheck="false">
-              <button class="btn-go" title="Navegar">➔</button>
+              <button class="btn-go" title="Navegar"><svg class="ui-icon"><use href="#icon-go"/></svg></button>
             </div>
 
             <div class="quadrant-actions">
-              <button class="btn-action btn-miner-alert hidden" title="Ameaça de Mineração Bloqueada neste painel! Clique para verificar detalhes">🛡️⚠️</button>
-              <button class="btn-action btn-autoclick" title="Auto-Clicker (Clique para Ligar/Desligar)">🎯</button>
+              <button class="btn-action btn-miner-alert hidden" title="Ameaça de Mineração Bloqueada"><svg class="ui-icon"><use href="#icon-shield-alert"/></svg></button>
+              <button class="btn-action btn-autoclick" title="Auto-Clicker (Clique para Ligar/Desligar)"><svg class="ui-icon"><use href="#icon-target"/></svg></button>
               <span class="autoclick-badge hidden">20 CPS</span>
-              <button class="btn-action btn-credentials" title="Logins & Senhas Salvas deste Jogo">🔑</button>
-              <button class="btn-action btn-bookmark" title="Adicionar aos Favoritos">⭐</button>
+              <button class="btn-action btn-credentials" title="Logins & Senhas Salvas deste Jogo"><svg class="ui-icon"><use href="#icon-key"/></svg></button>
+              <button class="btn-action btn-bookmark" title="Adicionar aos Favoritos"><svg class="ui-icon"><use href="#icon-star"/></svg></button>
               <div class="volume-group" title="Controle Fino de Volume (0% a 200%)">
-                <button class="btn-action btn-mute" title="Mutar/Desmutar este jogo">🔊</button>
+                <button class="btn-action btn-mute" title="Mutar/Desmutar este jogo"><svg class="ui-icon"><use href="#icon-volume"/></svg></button>
                 <input type="range" class="volume-slider" min="0" max="200" step="5" value="100" title="Ajustar Volume (0% a 200%)">
                 <span class="volume-level" title="Ganho de Áudio">100%</span>
               </div>
@@ -393,9 +424,9 @@
                 <span class="zoom-level">100%</span>
                 <button class="btn-action btn-zoom-in" title="Aumentar Zoom">+</button>
               </div>
-              <button class="btn-action btn-devtools" title="Abrir Console/DevTools">🛠️</button>
-              <button class="btn-action btn-expand" title="Maximizar este quadrante">⤢</button>
-              <button class="btn-action btn-close-quadrant" title="Fechar este painel">✕</button>
+              <button class="btn-action btn-devtools" title="Abrir Console/DevTools"><svg class="ui-icon"><use href="#icon-tools"/></svg></button>
+              <button class="btn-action btn-expand" title="Maximizar este quadrante"><svg class="ui-icon"><use href="#icon-expand"/></svg></button>
+              <button class="btn-action btn-close-quadrant" title="Fechar este painel"><svg class="ui-icon"><use href="#icon-close"/></svg></button>
             </div>
           </div>
           <div class="webview-wrapper">
@@ -419,25 +450,25 @@
         <section class="quadrant" id="quadrant-4" data-id="4">
           <div class="quadrant-toolbar">
             <span class="slot-badge slot-4">P4</span>
-            <button class="btn-nav btn-home" title="Início / Tela Inicial">🏠</button>
-            <button class="btn-nav btn-back" title="Voltar">‹</button>
-            <button class="btn-nav btn-forward" title="Avançar">›</button>
-            <button class="btn-nav btn-reload" title="Recarregar">↻</button>
+            <button class="btn-nav btn-home" title="Início / Tela Inicial"><svg class="ui-icon"><use href="#icon-home"/></svg></button>
+            <button class="btn-nav btn-back" title="Voltar"><svg class="ui-icon"><use href="#icon-arrow-left"/></svg></button>
+            <button class="btn-nav btn-forward" title="Avançar"><svg class="ui-icon"><use href="#icon-arrow-right"/></svg></button>
+            <button class="btn-nav btn-reload" title="Recarregar"><svg class="ui-icon"><use href="#icon-reload"/></svg></button>
             
             <div class="url-input-container">
-              <span class="url-shield secure" title="Conexão Criptografada Segura (HTTPS)">🔒</span>
+              <span class="url-shield secure" title="Conexão Criptografada Segura (HTTPS)"><svg class="ui-icon"><use href="#icon-lock"/></svg></span>
               <input type="text" class="url-input" placeholder="Digite uma URL ou escolha um jogo..." spellcheck="false">
-              <button class="btn-go" title="Navegar">➔</button>
+              <button class="btn-go" title="Navegar"><svg class="ui-icon"><use href="#icon-go"/></svg></button>
             </div>
 
             <div class="quadrant-actions">
-              <button class="btn-action btn-miner-alert hidden" title="Ameaça de Mineração Bloqueada neste painel! Clique para verificar detalhes">🛡️⚠️</button>
-              <button class="btn-action btn-autoclick" title="Auto-Clicker (Clique para Ligar/Desligar)">🎯</button>
+              <button class="btn-action btn-miner-alert hidden" title="Ameaça de Mineração Bloqueada"><svg class="ui-icon"><use href="#icon-shield-alert"/></svg></button>
+              <button class="btn-action btn-autoclick" title="Auto-Clicker (Clique para Ligar/Desligar)"><svg class="ui-icon"><use href="#icon-target"/></svg></button>
               <span class="autoclick-badge hidden">20 CPS</span>
-              <button class="btn-action btn-credentials" title="Logins & Senhas Salvas deste Jogo">🔑</button>
-              <button class="btn-action btn-bookmark" title="Adicionar aos Favoritos">⭐</button>
+              <button class="btn-action btn-credentials" title="Logins & Senhas Salvas deste Jogo"><svg class="ui-icon"><use href="#icon-key"/></svg></button>
+              <button class="btn-action btn-bookmark" title="Adicionar aos Favoritos"><svg class="ui-icon"><use href="#icon-star"/></svg></button>
               <div class="volume-group" title="Controle Fino de Volume (0% a 200%)">
-                <button class="btn-action btn-mute" title="Mutar/Desmutar este jogo">🔊</button>
+                <button class="btn-action btn-mute" title="Mutar/Desmutar este jogo"><svg class="ui-icon"><use href="#icon-volume"/></svg></button>
                 <input type="range" class="volume-slider" min="0" max="200" step="5" value="100" title="Ajustar Volume (0% a 200%)">
                 <span class="volume-level" title="Ganho de Áudio">100%</span>
               </div>
@@ -446,9 +477,9 @@
                 <span class="zoom-level">100%</span>
                 <button class="btn-action btn-zoom-in" title="Aumentar Zoom">+</button>
               </div>
-              <button class="btn-action btn-devtools" title="Abrir Console/DevTools">🛠️</button>
-              <button class="btn-action btn-expand" title="Maximizar este quadrante">⤢</button>
-              <button class="btn-action btn-close-quadrant" title="Fechar este painel">✕</button>
+              <button class="btn-action btn-devtools" title="Abrir Console/DevTools"><svg class="ui-icon"><use href="#icon-tools"/></svg></button>
+              <button class="btn-action btn-expand" title="Maximizar este quadrante"><svg class="ui-icon"><use href="#icon-expand"/></svg></button>
+              <button class="btn-action btn-close-quadrant" title="Fechar este painel"><svg class="ui-icon"><use href="#icon-close"/></svg></button>
             </div>
           </div>
           <div class="webview-wrapper">
@@ -510,37 +541,50 @@
       </aside>
     </div>
 
-    <!-- Bottom Resource & RAM HUD -->
+    <!-- Bottom Resource & RAM HUD (Cockpit HUD) -->
     <footer id="resource-hud" class="resource-hud">
       <div class="hud-section hud-brand">
         <span class="hud-pulse"></span>
-        <span class="hud-title">📊 RAM HUD</span>
+        <svg class="ui-icon hud-telemetry-icon" style="color:var(--accent-cyan);margin-right:2px;"><use href="#icon-activity"/></svg>
+        <span class="hud-title">COCKPIT RAM HUD</span>
       </div>
 
       <div class="hud-slots">
         <div class="hud-slot" id="hud-p1">
           <span class="slot-badge slot-1">P1</span>
-          <span class="hud-val" id="hud-val-1">-- MB</span>
+          <div class="hud-meter-wrap">
+            <div class="hud-meter-bar"><div class="hud-meter-fill" id="hud-meter-1"></div></div>
+            <span class="hud-val" id="hud-val-1">-- MB</span>
+          </div>
         </div>
         <div class="hud-slot" id="hud-p2">
           <span class="slot-badge slot-2">P2</span>
-          <span class="hud-val" id="hud-val-2">-- MB</span>
+          <div class="hud-meter-wrap">
+            <div class="hud-meter-bar"><div class="hud-meter-fill" id="hud-meter-2"></div></div>
+            <span class="hud-val" id="hud-val-2">-- MB</span>
+          </div>
         </div>
         <div class="hud-slot" id="hud-p3">
           <span class="slot-badge slot-3">P3</span>
-          <span class="hud-val" id="hud-val-3">-- MB</span>
+          <div class="hud-meter-wrap">
+            <div class="hud-meter-bar"><div class="hud-meter-fill" id="hud-meter-3"></div></div>
+            <span class="hud-val" id="hud-val-3">-- MB</span>
+          </div>
         </div>
         <div class="hud-slot" id="hud-p4">
           <span class="slot-badge slot-4">P4</span>
-          <span class="hud-val" id="hud-val-4">-- MB</span>
+          <div class="hud-meter-wrap">
+            <div class="hud-meter-bar"><div class="hud-meter-fill" id="hud-meter-4"></div></div>
+            <span class="hud-val" id="hud-val-4">-- MB</span>
+          </div>
         </div>
       </div>
 
       <div class="hud-summary">
-        <span class="hud-label">Total 4Nav:</span>
+        <span class="hud-label">Total:</span>
         <span id="hud-val-total" class="hud-total-val">-- MB</span>
         <button id="btn-clean-ram" class="btn-clean-ram" title="Limpar cache de rede e liberar memória não utilizada">
-          🧹 Otimizar RAM
+          <svg class="ui-icon" style="width:12px;height:12px;margin-right:4px;"><use href="#icon-broom"/></svg> Otimizar RAM
         </button>
       </div>
     </footer>
